@@ -52,6 +52,20 @@ def main():
         wait_results(page)
         page.screenshot(path=str(OUT / "05_owned_pinned.png"), full_page=True)
 
+        # 6. swap that re-binds a SECOND slot: reject the retinoid -> the acid re-schedules AM<->PM
+        page.click("button.preset[data-i='1']")   # oily + acne: retinoid PM + BHA AM
+        wait_results(page)
+        page.evaluate("""() => {
+          for (const c of document.querySelectorAll('#results .rounded-lg')) {
+            if (/retinol/i.test(c.textContent)) {
+              const b = [...c.querySelectorAll('button')].find(x => /swap/i.test(x.textContent));
+              if (b) { b.click(); return true; }
+            }
+          } return false;
+        }""")
+        page.wait_for_timeout(3500)
+        page.screenshot(path=str(OUT / "06_swap_reschedule.png"), full_page=True)
+
         b.close()
     print("saved:", *[f.name for f in sorted(OUT.glob('*.png'))])
 

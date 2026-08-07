@@ -33,6 +33,7 @@ class RoutineRequest(BaseModel):
     exclusions: list[str] = []
     experience: str = "intermediate"
     owned: list[str] = Field(default=[], description="Products the user already uses (§5.5)")
+    exclude: list[str] = Field(default=[], description="Product ids rejected via swap (§2d)")
 
 
 class _Cache:
@@ -113,14 +114,14 @@ async def recommend_routine(req: RoutineRequest, constraints: str = Query("on"))
     _state["requests"] += 1
     enforce = constraints != "off"
     key = "rt:" + hashlib.md5(json.dumps(
-        [req.skin_type, sorted(req.concerns), req.budget_inr, enforce, sorted(req.owned)]).encode()).hexdigest()
+        [req.skin_type, sorted(req.concerns), req.budget_inr, enforce, sorted(req.owned), sorted(req.exclude)]).encode()).hexdigest()
     hit = await cache.get(key)
     if hit:
         _state["cache_hits"] += 1
         hit["cached"] = True
         return hit
     profile = sv.Profile(concerns=req.concerns or ["aging"], budget=req.budget_inr, skin=req.skin_type)
-    result = await recommend(profile, enforce_conflicts=enforce, owned=req.owned)
+    result = await recommend(profile, enforce_conflicts=enforce, owned=req.owned, exclude=req.exclude)
     result["cached"] = False
     await cache.set(key, result)
     return result

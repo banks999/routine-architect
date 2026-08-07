@@ -22,10 +22,13 @@ from rapidfuzz import fuzz, process
 
 from app.core.ingredients import present_classes
 
-# Cutoffs are deliberately HIGH: a confident wrong match produces confident wrong safety
-# advice (the §6.3b false-match failure mode). Better to fall through to Tier 4 (inferred,
-# conflict checking disabled) than to assert a bad catalogue match.
-FUZZY_CUTOFF = 90       # WRatio 0-100
+# A confident wrong match produces confident wrong safety advice (the §6.3b failure).
+# token_sort_ratio (not WRatio) is used deliberately: WRatio's token-set component gives
+# ~85 to ANY product sharing a word (e.g. Nivea -> a random "Curl Cream"), so it can't
+# separate a real match from garbage. token_sort_ratio scores off-catalogue names 56-70
+# and real matches 81-97 — a clean gap — so a cutoff of 80 rejects the spurious ones.
+SCORER = fuzz.token_sort_ratio
+FUZZY_CUTOFF = 80       # 0-100
 SEMANTIC_CUTOFF = 0.72  # cosine
 
 # name-keyword inference for Tier 4 (used when there's no Gemini key). Deliberately
@@ -106,7 +109,7 @@ def resolve(query: str, ctx: Ctx, pasted: str | None = None, manual: list | None
     # Tier 1 — fuzzy name+brand
     if ctx.names:
         choices = {pid: nm for pid, nm in ctx.names}
-        best = process.extractOne(q, choices, scorer=fuzz.WRatio)
+        best = process.extractOne(q, choices, scorer=SCORER)
         if best and best[1] >= FUZZY_CUTOFF:
             nm, sc, pid = best[0], best[1], best[2]
             cls = present_classes(ctx.ingredients.get(pid, ""), None)

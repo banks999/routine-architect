@@ -84,9 +84,9 @@ def _z(a):
     return (a - a.mean()) / a.std() if a.std() > 1e-9 else np.zeros_like(a)
 
 
-def _cands(query, slot, skin):
-    ids = [h["product_id"] for h in ret.retrieve(query, "treatment" if slot.startswith("treatment") else slot, top_k=30)
-           if h["product_id"] in EMB and h["product_id"] in _priors.index]
+def _cands(query, slot, skin, exclude=frozenset()):
+    ids = [h["product_id"] for h in ret.retrieve(query, "treatment" if slot.startswith("treatment") else slot, top_k=40)
+           if h["product_id"] in EMB and h["product_id"] in _priors.index and h["product_id"] not in exclude]
     qv = ret.get_model().encode([query], normalize_embeddings=True)[0]
     sem = _z([float(qv @ EMB[i]) for i in ids])
     rat = _z([_priors.at[i, "bayes"] for i in ids])
@@ -106,13 +106,13 @@ def _cands(query, slot, skin):
     return sorted(out, key=lambda c: c.relevance, reverse=True)
 
 
-def build_candidates(profile: sv.Profile):
+def build_candidates(profile: sv.Profile, exclude=frozenset()):
     c1, c2 = profile.concerns[0], profile.concerns[-1]
-    return {"cleanser": _cands(BASE_Q["cleanser"], "cleanser", profile.skin),
-            "moisturizer": _cands(BASE_Q["moisturizer"], "moisturizer", profile.skin),
-            "spf": _cands(BASE_Q["spf"], "spf", profile.skin),
-            "treatment_A": _cands(CONCERN_QUERY.get(c1, c1), "treatment_A", profile.skin),
-            "treatment_B": _cands(CONCERN_QUERY.get(c2, c2), "treatment_B", profile.skin)}
+    return {"cleanser": _cands(BASE_Q["cleanser"], "cleanser", profile.skin, exclude),
+            "moisturizer": _cands(BASE_Q["moisturizer"], "moisturizer", profile.skin, exclude),
+            "spf": _cands(BASE_Q["spf"], "spf", profile.skin, exclude),
+            "treatment_A": _cands(CONCERN_QUERY.get(c1, c1), "treatment_A", profile.skin, exclude),
+            "treatment_B": _cands(CONCERN_QUERY.get(c2, c2), "treatment_B", profile.skin, exclude)}
 
 
 _PHRASE_FIX = {"long way": "a little goes a long way", "little goes": "a little goes a long way",
@@ -259,10 +259,11 @@ def _card(pl, why, grounding, owned_meta=None):
     return card
 
 
-async def recommend(profile: sv.Profile, enforce_conflicts: bool = True, owned: list | None = None) -> dict:
+async def recommend(profile: sv.Profile, enforce_conflicts: bool = True, owned: list | None = None,
+                    exclude: list | None = None) -> dict:
     t = {}
     pinned, owned_meta, resolutions = _resolve_owned(owned or [])
-    t0 = time.perf_counter(); cands = build_candidates(profile); t["retrieval_and_rank_ms"] = (time.perf_counter()-t0)*1000
+    t0 = time.perf_counter(); cands = build_candidates(profile, frozenset(exclude or [])); t["retrieval_and_rank_ms"] = (time.perf_counter()-t0)*1000
     t0 = time.perf_counter(); routine = sv.solve(cands, profile, enforce_conflicts=enforce_conflicts, pinned=pinned); t["solve_ms"] = (time.perf_counter()-t0)*1000
     t0 = time.perf_counter(); whys, ground, src = await _explain(routine.placements, profile); t["explain_ms"] = (time.perf_counter()-t0)*1000
 

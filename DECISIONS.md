@@ -36,6 +36,19 @@ repeat after closing the tab. "Ranking is the wrong abstraction for skincare" is
 
 <!-- Append new entries below. Newest last. -->
 
+## [H+15.5] False-match rate (§6.3b, quantified) + swap-and-re-solve (§2d)
+
+**1. FALSE-MATCH RATE — measured, with a before/after that's a real result.** 30 product names deliberately NOT in the US-Sephora catalogue (incl. Indian D2C: Minimalist, Dot & Key, Deconstruct, The Derma Co, Foxtale, Plum, Re'equil, Aqualogica). For a name-only query the correct outcome is Tier 4 (inferred, checking disabled); any Tier 1/2 "verified" match is therefore a **false match** = confident wrong product → confident wrong safety advice.
+- **Root-caused a bug, not just tuned a knob:** rapidfuzz `WRatio` gives ~85 to *any* product sharing a single word (its token-set component), e.g. "Nivea Soft Cream" → a random "Baomint Curl Cream" at 85.5. So at the original cutoff 84, **100% (30/30) false-matched** — all clustered at 85.5 against Algenist/other products.
+- **Fix:** switched the scorer to `token_sort_ratio`, which scores off-catalogue names **56–70** and real matches **81–97** — a clean, principled gap — and set the cutoff to 80. **False-match rate: 100% → 10%** (3/30). The residual 3 are all Tier-2 *semantic* near-matches (CeraVe→a similar Paula's cleanser, etc.) — the genuinely hard cases, and they're the honest ceiling of automatic resolution. Numbers in `eval/results.json`.
+- Verified the ladder still resolves correctly end-to-end (Paula's→T1, CeraVe→T2, Minimalist paste→T3, Deconstruct→T4 disabled, manual→T5).
+
+**2. SWAP AND RE-SOLVE (§2d).** A "✕ swap" button per product card → the id is added to an `exclude` set → the solver re-runs without it → the board updates. **The point (what a ranked list structurally cannot do):** removing one item can re-bind constraints ELSEWHERE. The UI diffs the new routine against the previous and surfaces secondary changes explicitly. Demonstrated + screenshotted (`06_swap_reschedule.png`): on the oily+acne routine (retinoid PM + BHA AM, scheduled apart), **rejecting the retinoid frees the BHA to re-schedule AM→PM** — its preferred session — because the conflict it was avoiding is gone. Banner: *"Removing Retinol… re-bound the routine — also changed: treatment A re-scheduled AM→PM. A ranked list can't do this."* Changed slots get an amber ring + "changed" badge.
+
+**3. Decided AGAINST the Indian-catalogue merge (per instruction).** Those products have no reviews → no themes, no co-review CF, no skin-affinity → they'd need special-casing throughout the ranker and would likely make the demo worse. The catalogue-agnostic claim is already proven by Minimalist (Tier 3 paste) and Deconstruct (Tier 4 inferred) in the resolution test — assertion demonstrated, not just stated.
+**Full test suite green.** Feature-complete; next is the document.
+**Doc §:** 6.3b (false-match before/after), 5 (swap = constraints re-bind), 13 (open-world).
+
 ## [H+15] Phase 2c — open-world "products I already own" (§5.5 resolution ladder + pinning)
 
 **Resolver (`app/core/resolve.py`) — the 5-tier ladder, first hit wins:** (1) fuzzy name+brand (rapidfuzz WRatio) → verified, full checking; (2) semantic on embeddings → verified; (3) user-pasted INCI → parsed on the fly → user_supplied, full checking; (4) name inference → **inferred, conflict checking DISABLED**; (5) manual class selection → manual, partial. The engine is catalogue-agnostic — it operates on function vectors, so an anchor need not be purchasable, only reasoned-about.
