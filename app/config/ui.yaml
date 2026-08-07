@@ -1,0 +1,6 @@
+# UI defaults for the FastAPI/UI phase (no UI built yet — captured here so it's not lost).
+budget:
+  default_inr: 12000
+  min_inr: 4000
+  max_inr: 30000
+  presets_inr: [5000, 12000, 20000]   # 5000 is the tight preset that makes the constraint visibly bind

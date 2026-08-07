@@ -1,0 +1,8 @@
+# raw Kaggle dump is gitignored (download script provided); processed indexes ARE committed
+data/raw/
+.env
+__pycache__/
+*.pyc
+.hf/
+.venv/
+data/processed/emb_all.npz.tmp

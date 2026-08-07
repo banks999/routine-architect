@@ -1,0 +1,15 @@
+fastapi
+uvicorn[standard]
+pydantic>=2
+motor
+pymongo
+redis
+sentence-transformers
+faiss-cpu
+rank-bm25
+pandas
+pyarrow
+numpy
+pyyaml
+google-generativeai
+python-dotenv

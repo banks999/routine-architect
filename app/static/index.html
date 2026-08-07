@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Routine Architect</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  .pink{color:#fc2779}.bg-pink{background:#fc2779}.border-pink{border-color:#fc2779}
+  body{background:#fdf2f7}
+  .switch{width:52px;height:28px;border-radius:14px;transition:.2s}
+  .knob{width:22px;height:22px;transition:.2s}
+</style>
+</head>
+<body class="text-slate-800">
+<div class="max-w-6xl mx-auto p-4">
+  <header class="flex items-center justify-between mb-3">
+    <div>
+      <h1 class="text-2xl font-bold">🧴 Routine <span class="pink">Architect</span></h1>
+      <p class="text-sm text-slate-500">Skincare is a constrained set, not a ranking. We schedule around ingredient conflicts.</p>
+    </div>
+    <div id="backend" class="text-xs text-slate-400"></div>
+  </header>
+
+  <div class="bg-amber-50 border border-amber-200 text-amber-800 text-xs rounded-lg px-3 py-2 mb-4">
+    ⚠️ <b>Not medical advice.</b> Conflict rules are Western-dermatology heuristics, not clinically validated. Consult a dermatologist for medical concerns.
+  </div>
+
+  <!-- presets -->
+  <div class="mb-4">
+    <div class="text-xs uppercase tracking-wide text-slate-400 mb-1">One-click demos</div>
+    <div id="presets" class="flex flex-wrap gap-2"></div>
+  </div>
+
+  <div class="grid md:grid-cols-[300px_1fr] gap-4">
+    <!-- form -->
+    <aside class="bg-white rounded-xl shadow-sm p-4 space-y-3 h-fit">
+      <div><label class="text-xs font-semibold text-slate-500">Skin type</label>
+        <select id="skin" class="w-full border rounded-lg p-2 mt-1 text-sm">
+          <option>combination</option><option>oily</option><option>dry</option><option>normal</option></select></div>
+      <div><label class="text-xs font-semibold text-slate-500">Concerns</label>
+        <div id="concerns" class="grid grid-cols-2 gap-1 mt-1 text-sm"></div></div>
+      <div><label class="text-xs font-semibold text-slate-500">Budget: <span id="budgetLabel" class="pink font-bold">₹12,000</span></label>
+        <input id="budget" type="range" min="4000" max="30000" step="500" value="12000" class="w-full accent-pink mt-1"></div>
+      <div><label class="text-xs font-semibold text-slate-500">Exclusions</label>
+        <div id="exclusions" class="grid grid-cols-2 gap-1 mt-1 text-sm"></div></div>
+      <div><label class="text-xs font-semibold text-slate-500">Experience</label>
+        <select id="experience" class="w-full border rounded-lg p-2 mt-1 text-sm">
+          <option>beginner</option><option selected>intermediate</option><option>advanced</option></select></div>
+      <button id="go" class="w-full bg-pink text-white rounded-lg py-2 font-semibold">Build my routine</button>
+    </aside>
+
+    <!-- results -->
+    <main>
+      <div class="flex items-center gap-3 mb-3">
+        <span class="text-sm font-semibold">Safety layer</span>
+        <div id="toggle" class="switch bg-emerald-400 flex items-center px-[3px] cursor-pointer">
+          <div class="knob bg-white rounded-full ml-auto shadow"></div></div>
+        <span id="toggleLabel" class="text-xs text-emerald-600 font-semibold">ON — conflicts scheduled apart</span>
+      </div>
+      <div id="statusMsg" class="text-slate-400 text-sm py-16 text-center">Pick a preset above to see a routine ↑</div>
+      <div id="results" class="hidden space-y-4"></div>
+    </main>
+  </div>
+</div>
+
+<script>
+const CONCERNS=["aging","texture","acne","dark_spots","dullness","redness","dryness","oiliness"];
+const EXCL=["fragrance","essential oils","pregnancy-safe only","alcohol"];
+const PRESETS=[
+  {label:"✨ Anti-aging + texture",skin:"combination",concerns:["aging","texture"],budget:12000},
+  {label:"🔴 Oily & acne-prone (forces AM/PM split)",skin:"oily",concerns:["acne","aging"],budget:9000},
+  {label:"🌟 Brightening & dullness",skin:"dry",concerns:["dark_spots","dullness"],budget:14000},
+  {label:"💸 Tight ₹5,000 budget",skin:"oily",concerns:["acne","aging"],budget:5000},
+];
+let constraintsOn=true, lastProfile=null;
+
+// build form controls
+CONCERNS.forEach(c=>concerns.insertAdjacentHTML("beforeend",
+  `<label class="flex items-center gap-1"><input type="checkbox" class="conc accent-pink" value="${c}">${c.replace("_"," ")}</label>`));
+EXCL.forEach(c=>exclusions.insertAdjacentHTML("beforeend",
+  `<label class="flex items-center gap-1"><input type="checkbox" class="excl accent-pink" value="${c}">${c}</label>`));
+PRESETS.forEach((p,i)=>presets.insertAdjacentHTML("beforeend",
+  `<button data-i="${i}" class="preset border border-pink pink text-sm rounded-full px-3 py-1 hover:bg-pink hover:text-white">${p.label}</button>`));
+budget.oninput=()=>budgetLabel.textContent="₹"+(+budget.value).toLocaleString("en-IN");
+
+document.querySelectorAll(".preset").forEach(b=>b.onclick=()=>{
+  const p=PRESETS[b.dataset.i]; skin.value=p.skin; budget.value=p.budget; budget.oninput();
+  document.querySelectorAll(".conc").forEach(x=>x.checked=p.concerns.includes(x.value));
+  run();
+});
+go.onclick=run;
+toggle.onclick=()=>{constraintsOn=!constraintsOn; paintToggle(); if(lastProfile) run(true);};
+function paintToggle(){
+  toggle.className="switch flex items-center px-[3px] cursor-pointer "+(constraintsOn?"bg-emerald-400":"bg-rose-500");
+  toggle.firstElementChild.className="knob bg-white rounded-full shadow "+(constraintsOn?"ml-auto":"");
+  toggleLabel.textContent=constraintsOn?"ON — conflicts scheduled apart":"OFF — recommender ignores conflicts";
+  toggleLabel.className="text-xs font-semibold "+(constraintsOn?"text-emerald-600":"text-rose-600");
+}
+
+function gather(){
+  return {skin_type:skin.value,
+    concerns:[...document.querySelectorAll(".conc:checked")].map(x=>x.value),
+    budget_inr:+budget.value,
+    exclusions:[...document.querySelectorAll(".excl:checked")].map(x=>x.value),
+    experience:experience.value};
+}
+async function run(keepProfile){
+  const body=keepProfile&&lastProfile?lastProfile:gather();
+  if(!body.concerns.length){alert("Pick at least one concern");return;}
+  lastProfile=body;
+  statusMsg.classList.remove("hidden");results.classList.add("hidden");
+  statusMsg.textContent="Solving…";
+  const url="/recommend/routine"+(constraintsOn?"":"?constraints=off");
+  const r=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  render(await r.json());
+}
+
+const money=x=>"₹"+Math.round(x).toLocaleString("en-IN");
+const chip=(t,cls="bg-pink/10 pink")=>`<span class="text-[11px] px-2 py-[2px] rounded-full ${cls}">${t}</span>`;
+function card(c){
+  return `<div class="border rounded-lg p-3">
+    <div class="flex justify-between gap-2"><div class="font-semibold text-sm">${c.name}</div>
+      <div class="text-sm font-bold whitespace-nowrap">${money(c.price_inr)}</div></div>
+    <div class="text-[11px] text-slate-400 uppercase">${c.slot.replace("_"," ")}</div>
+    <div class="flex flex-wrap gap-1 my-1">${c.actives.map(a=>chip(a.replace(/_/g," "))).join("")||'<span class="text-[11px] text-slate-400">no flagged actives</span>'}</div>
+    <details class="text-xs text-slate-600"><summary class="cursor-pointer pink">why this for you</summary>
+      <p class="mt-1">${c.why}</p></details></div>`;
+}
+function board(title,items,tint){
+  return `<div class="bg-white rounded-xl shadow-sm p-4">
+    <h3 class="font-bold mb-2">${title}</h3>
+    <div class="grid sm:grid-cols-2 gap-2">${items.map(card).join("")}</div></div>`;
+}
+function render(d){
+  statusMsg.classList.add("hidden");results.classList.remove("hidden");
+  backend.textContent=`store: ${d.backend} · ${d.cached?"cached":"live"} · expl: ${d.explanation_source}`;
+  const safe=d.hard_violations.length===0;
+  const banner=safe
+    ? `<div class="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-lg p-3 text-sm">✅ <b>0 conflicts.</b> Total ${money(d.total_price_inr)} ${d.within_budget?"— within budget":'<span class="text-rose-600">— over budget</span>'}</div>`
+    : `<div class="bg-rose-50 border border-rose-300 text-rose-800 rounded-lg p-3 text-sm">⛔ <b>${d.hard_violations.length} hard conflict(s) shipped</b> (safety layer OFF): ${d.hard_violations.map(v=>v.rule_id).join(", ")}</div>`;
+
+  // avoided or violations panel
+  let panel="";
+  const list = safe? d.avoided : d.hard_violations;
+  if(list.length){
+    panel=`<div class="bg-white rounded-xl shadow-sm p-4"><h3 class="font-bold mb-2">${safe?"🛡️ Conflicts avoided":"⛔ Conflicts (unresolved)"}</h3>
+      <div class="space-y-2">`+list.map(v=>{
+        const tag = safe?`<span class="text-[11px] px-2 py-[2px] rounded-full bg-emerald-100 text-emerald-700">${v.action}</span>`:chip("HARD","bg-rose-100 text-rose-700");
+        return `<div class="border rounded-lg p-2 text-sm ${safe?"":"border-rose-300"}">
+          <div class="flex justify-between"><b>${v.rule_id} · ${v.classes||v.class_a}</b>${tag}</div>
+          <div class="text-slate-600 text-xs mt-1">${v.mechanism}</div>
+          ${v.citation?`<div class="text-[11px] text-slate-400 mt-1">📖 ${v.citation}</div>`:""}
+          ${v.products?`<div class="text-[11px] text-slate-500 mt-1">${v.products.join("  |  ")}</div>`:""}</div>`;
+      }).join("")+`</div></div>`;
+  }
+  const cautions = d.cautions.length?`<div class="bg-white rounded-xl shadow-sm p-4"><h3 class="font-bold mb-2 text-amber-600">⚠️ Cautions (surfaced, not blocked)</h3>
+    <div class="space-y-1 text-xs">${d.cautions.map(v=>`<div><b>${v.rule_id} ${v.severity}</b> · ${v.classes} — ${v.mechanism}</div>`).join("")}</div></div>`:"";
+
+  // debug
+  const sd=d.score_decomposition, lat=d.latency_ms;
+  const dbg=`<details class="bg-slate-900 text-slate-200 rounded-xl p-4 text-xs"><summary class="cursor-pointer font-semibold">🔧 Debug — score decomposition & latency</summary>
+    <div class="grid grid-cols-2 gap-3 mt-2">
+      <div><div class="text-slate-400 mb-1">objective = Σrel + α·cov − β·redund − γ·overrun</div>
+        <div>relevance Σ: <b>${sd.relevance_sum}</b></div><div>concern coverage: <b>${(sd.concern_coverage*100).toFixed(0)}%</b> (α=${sd.weights.alpha})</div>
+        <div>function redundancy: <b>${sd.function_redundancy}</b> (β=${sd.weights.beta})</div><div>budget overrun: <b>${sd.budget_overrun}</b> (γ=${sd.weights.gamma})</div>
+        <div class="mt-1">final score: <b class="pink">${sd.final_score}</b></div></div>
+      <div><div class="text-slate-400 mb-1">per-stage latency (ms)</div>
+        ${Object.entries(lat).map(([k,v])=>`<div>${k}: <b>${v}</b></div>`).join("")}</div>
+    </div></details>`;
+
+  results.innerHTML = banner + board("☀️ Morning (AM)",d.am) + board("🌙 Night (PM)",d.pm) + panel + cautions + dbg;
+}
+paintToggle();
+</script>
+</body>
+</html>

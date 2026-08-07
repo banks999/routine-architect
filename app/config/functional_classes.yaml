@@ -1,0 +1,123 @@
+# Ingredient -> functional class keyword map (BUILD_PLAN §3.1).
+# Matching: an ingredient token belongs to a class if ANY `include` substring is
+# present AND NO `exclude` substring is present (case-insensitive, substring match
+# on the lowercased token WITH parenthetical common names kept, for recall).
+#
+# The `exclude` guards exist to stop known false positives that would corrupt the
+# conflict engine (the safety layer), e.g. sunscreen "salicylate" != BHA "salicylic
+# acid", and vitamin-C derivatives that contain the substring "ascorbic acid".
+# Twenty classes we can defend > fifty we can't.
+
+# ---- ACTIVES (conflict-relevant; detection accuracy matters most here) ----
+retinoid:
+  group: actives
+  include: [retinol, retinal, retinaldehyde, tretinoin, retinyl, retinoic,
+            hydroxypinacolone retinoate, adapalene]
+
+aha:
+  group: actives
+  # citric acid deliberately EXCLUDED — it is a pH buffer in ~all formulas, not an
+  # exfoliant, and counting it would fire false conflicts. See DECISIONS.
+  include: ["glycolic acid", "lactic acid", "mandelic acid", "malic acid",
+            "tartaric acid", "glycolic", "mandelic"]
+  exclude: ["sodium lactate", "ammonium lactate"]
+
+bha:
+  group: actives
+  include: ["salicylic acid", "betaine salicylate", "salix", "willow bark"]
+  # ethylhexyl/butyloctyl salicylate are UV filters, not BHA — they contain
+  # "salicylate" not "salicylic acid", so they don't match here. No guard needed.
+
+pha:
+  group: actives
+  include: [gluconolactone, "lactobionic acid", galactose]
+
+vitamin_c_laa:
+  group: actives
+  include: ["ascorbic acid"]
+  exclude: [ethyl, ascorbyl, ascorbate]   # -> derivatives, not free L-AA
+
+vitamin_c_derivative:
+  group: actives
+  include: ["ascorbyl", "ascorbate", "ethyl ascorbic acid"]
+
+niacinamide:
+  group: actives
+  include: [niacinamide, nicotinamide]
+
+azelaic_acid:
+  group: actives
+  include: ["azelaic acid", azeloyl, "azeloyl diglycinate"]
+
+benzoyl_peroxide:
+  group: actives
+  include: ["benzoyl peroxide"]
+
+hydroquinone:
+  group: actives
+  include: [hydroquinone]
+
+peptide:
+  group: actives
+  include: [palmitoyl, hexapeptide, pentapeptide, tetrapeptide, tripeptide,
+            dipeptide, oligopeptide, polypeptide, "acetyl hexapeptide", matrixyl]
+
+copper_peptide:
+  group: actives
+  include: ["copper tripeptide", "copper peptide", "ghk-cu", "copper lysinate",
+            "copper prezatide"]
+
+sulfur:
+  group: actives
+  include: [sulfur, sulphur, "colloidal sulfur"]
+
+# ---- SUPPORT ----
+humectant:
+  group: support
+  include: ["hyaluronic acid", "sodium hyaluronate", "hydrolyzed hyaluronic",
+            glycerin, glycerol, panthenol, "propylene glycol", "butylene glycol",
+            betaine, "sodium pca", urea, trehalose, "sodium lactate"]
+
+ceramide_barrier:
+  group: support
+  include: [ceramide, phytosphingosine, sphingolipid, cholesterol]
+
+occlusive:
+  group: support
+  include: [petrolatum, "mineral oil", dimethicone, lanolin, "shea butter",
+            beeswax, "cera alba", squalane, squalene, "jojoba oil"]
+
+antioxidant_other:
+  group: support
+  include: [tocopherol, "vitamin e", "ferulic acid", resveratrol, "coenzyme q10",
+            ubiquinone, "green tea", "camellia sinensis", glutathione, astaxanthin]
+
+soothing:
+  group: support
+  include: [allantoin, bisabolol, centella, "cica", madecassoside, "asiaticoside",
+            aloe, chamomile, "colloidal oat", avena, calendula, licorice,
+            glycyrrhiza, "panthenol"]
+
+brightening_other:
+  group: support
+  include: [arbutin, "alpha arbutin", "kojic acid", "tranexamic acid",
+            "licorice root", "mulberry", "niacinamide"]  # niacinamide double-tags OK
+
+# ---- PROTECTION ----
+uv_filter_chemical:
+  group: protection
+  include: [avobenzone, octinoxate, octisalate, homosalate, octocrylene,
+            oxybenzone, "ethylhexyl methoxycinnamate", "butyl methoxydibenzoylmethane",
+            "ethylhexyl salicylate", "butyloctyl salicylate", uvinul, tinosorb,
+            mexoryl, "bis-ethylhexyloxyphenol"]
+
+uv_filter_mineral:
+  group: protection
+  include: ["zinc oxide", "titanium dioxide"]
+
+# ---- EXFOLIANT (physical; expect low coverage — often a formulation property
+#       not visible in INCI. Flagged as a known-underpopulated class.) ----
+exfoliant_physical:
+  group: exfoliant
+  include: ["walnut shell", "apricot seed", "silica beads", "jojoba esters",
+            "cellulose beads", "bamboo", "pumice", "sugar scrub"]

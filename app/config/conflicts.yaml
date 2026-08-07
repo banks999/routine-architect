@@ -1,0 +1,161 @@
+# Skincare ingredient-conflict rule base (BUILD_PLAN §4).
+# Schema per rule: a / b (functional classes) · severity · mechanism · citation.
+#
+# `mechanism` is rendered VERBATIM to users. The LLM never generates chemistry —
+# every safety claim a user sees originates from this file. Twenty rules we can
+# defend beat five hundred we can't.
+#
+# severity tiers:
+#   hard      — real incompatibility; the solver schedules these into separate
+#               AM/PM sessions (never same-session).
+#   soft      — cumulative/irritation risk; surfaced as a caution, not blocked.
+#   contested — a widely-repeated claim that primary/formulation evidence disputes;
+#               flagged with its provenance, NEVER enforced.
+
+rules:
+  - id: C1
+    a: retinoid
+    b: aha
+    severity: hard
+    mechanism: "Retinoids and AHA exfoliating acids in the same session compound exfoliation and can break down the skin barrier — redness, flaking and stinging. Kept in separate AM/PM sessions they are both fine."
+    citation: "Draelos ZD, Cosmetic Dermatology: Products and Procedures, 2nd ed., Wiley-Blackwell, 2015."
+
+  - id: C2
+    a: retinoid
+    b: bha
+    severity: hard
+    mechanism: "Retinoids with a BHA (salicylic acid) in one session over-exfoliate and disrupt the barrier, causing irritation and peeling. Split across AM/PM to use both safely."
+    citation: "Draelos ZD, Cosmetic Dermatology: Products and Procedures, 2nd ed., Wiley-Blackwell, 2015."
+
+  - id: C3
+    a: retinoid
+    b: benzoyl_peroxide
+    severity: hard
+    mechanism: "Benzoyl peroxide oxidises older retinoids such as tretinoin when applied together, degrading the retinoid and cutting its effectiveness (newer retinoids like adapalene are BPO-stable). Apply at different times of day."
+    citation: "Del Rosso JQ & Kircik L, J Clin Aesthet Dermatol, 2021 (retinoid–BPO photostability review)."
+
+  - id: C4
+    a: retinoid
+    b: vitamin_c_laa
+    severity: hard
+    mechanism: "Pure L-ascorbic acid works at a low pH that is incompatible with retinoid activity, and layering them raises irritation. The standard split is vitamin C in the morning, retinoid at night."
+    citation: "Telang PS, Indian Dermatol Online J, 2013 (vitamin C in dermatology)."
+
+  - id: C5
+    a: retinoid
+    b: exfoliant_physical
+    severity: hard
+    mechanism: "A physical scrub on top of a retinoid over-exfoliates already-sensitised skin, increasing micro-tears and irritation. Avoid scrubbing on retinoid days."
+    citation: "Draelos ZD, Cosmetic Dermatology: Products and Procedures, 2nd ed., Wiley-Blackwell, 2015."
+
+  - id: C6
+    a: retinoid
+    b: retinoid
+    severity: hard
+    mechanism: "Two separate retinoid products give no added benefit and multiply irritation. Keep a single retinoid in the routine."
+    citation: "Mukherjee S et al., Clin Interv Aging, 2006 (retinoids in skin ageing)."
+
+  - id: C7
+    a: vitamin_c_laa
+    b: aha
+    severity: hard
+    mechanism: "Pure vitamin C and AHAs both need a low pH and interfere with each other's stability and absorption when combined, while raising the acid load on skin. Use in separate sessions."
+    citation: "Telang PS, Indian Dermatol Online J, 2013."
+
+  - id: C8
+    a: vitamin_c_laa
+    b: bha
+    severity: hard
+    mechanism: "Pure vitamin C with a BHA in the same session compounds acidity and destabilises the vitamin C. Separate them across AM/PM."
+    citation: "Telang PS, Indian Dermatol Online J, 2013."
+
+  - id: C9
+    a: vitamin_c_laa
+    b: copper_peptide
+    severity: hard
+    mechanism: "Vitamin C and copper peptides can oxidise and inactivate each other when applied together, wasting both. Keep them in separate sessions."
+    citation: "Pickart L & Margolina A, Int J Mol Sci, 2018 (GHK-Cu copper peptide review)."
+
+  - id: C10
+    a: copper_peptide
+    b: aha
+    severity: hard
+    mechanism: "The low pH of an AHA can break down copper-peptide complexes and inactivate them. Do not layer in the same session."
+    citation: "Pickart L & Margolina A, Int J Mol Sci, 2018."
+
+  - id: C11
+    a: benzoyl_peroxide
+    b: aha
+    severity: soft
+    mechanism: "Benzoyl peroxide and an AHA together are both drying; used at full strength in one session they can leave skin tight and flaky. Fine if one is mild or they are alternated."
+    citation: "Kligman AM, Cutis, 1997 (irritancy of combination acne therapy)."
+
+  - id: C12
+    a: benzoyl_peroxide
+    b: bha
+    severity: soft
+    mechanism: "Benzoyl peroxide plus a BHA can cumulatively over-dry, especially on sensitive skin. Watch for tightness; alternate if it appears."
+    citation: "Kligman AM, Cutis, 1997."
+
+  - id: C13
+    a: aha
+    b: bha
+    severity: soft
+    mechanism: "An AHA and a BHA together only over-exfoliate when both are strong; many products deliberately combine them at low strengths. Caution, not a hard block."
+    citation: "Green BA et al., Clin Dermatol, 2009 (hydroxy acid clinical use)."
+
+  - id: C14
+    a: aha
+    b: aha
+    severity: soft
+    mechanism: "Two AHA products do the same job — redundant, and together they raise the exfoliation load with no extra benefit. Keep one."
+    citation: "Green BA et al., Clin Dermatol, 2009."
+
+  - id: C15
+    a: hydroquinone
+    b: benzoyl_peroxide
+    severity: soft
+    mechanism: "Hydroquinone can oxidise in the presence of benzoyl peroxide, occasionally causing temporary orange-brown staining of skin or fabric. Separating them avoids it."
+    citation: "Grimes PE, Cutis, 1995 (hydroquinone in hyperpigmentation)."
+
+  - id: C16
+    a: vitamin_c_laa
+    b: niacinamide
+    severity: contested
+    mechanism: "Contested: 1960s lab data suggested niacinamide and vitamin C react under heat to form skin-irritating nicotinic acid. Modern formulation science finds this negligible in finished, stabilised products at room temperature — many serums combine them deliberately. Flagged for transparency, not enforced."
+    citation: "Original heat-conversion data: Wohlrab & Kreft (nicotinic acid formation); refuted for finished products: Bissett DL, Dermatol Surg, 2005."
+
+  - id: C17
+    a: niacinamide
+    b: aha
+    severity: contested
+    mechanism: "Contested: niacinamide's preferred pH differs from that of AHAs, and older guidance advised separating them, but real-world evidence for a meaningful interaction in finished products is weak. Flagged, not enforced."
+    citation: "Draelos ZD, J Cosmet Dermatol, 2006 (niacinamide formulation review)."
+
+# Placement rules — NOT conflicts. These constrain WHICH session an active belongs in.
+placement:
+  - id: P1
+    classes: [retinoid]
+    allowed: [PM]
+    hard: true
+    reason: "Retinoids break down in UV light and increase sun sensitivity — use them at night."
+
+  - id: P2
+    classes: [vitamin_c_laa, vitamin_c_derivative]
+    allowed: [AM]
+    hard: false
+    reason: "Vitamin C is most useful in the morning, where its antioxidant action complements sunscreen."
+
+  - id: P3
+    classes: [uv_filter_chemical, uv_filter_mineral]
+    allowed: [AM]
+    hard: true
+    terminal: true
+    mandatory_if_photosensitiser: true
+    reason: "Sunscreen is the final morning step, and is required whenever the routine contains a photosensitising active (retinoid, AHA or BHA)."
+
+  - id: P4
+    classes: [aha, bha]
+    allowed: [PM]
+    hard: false
+    reason: "Exfoliating acids raise sun sensitivity; using them at night lowers the risk of UV irritation."

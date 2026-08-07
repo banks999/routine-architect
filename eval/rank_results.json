@@ -1,0 +1,34 @@
+{
+  "val_tuned_weights": {
+    "semantic": 0.3,
+    "cf": 0.7,
+    "rating": 0.0,
+    "skin": 0.0
+  },
+  "deployed_weights": {
+    "semantic": 0.3,
+    "cf": 0.5,
+    "rating": 0.1,
+    "skin": 0.1
+  },
+  "m": 206.5,
+  "C": 4.283038905260518,
+  "k_skin": 20.0,
+  "n_neg": 100,
+  "test_stale": {
+    "ndcg": 0.054326338554294966,
+    "recall": 0.121,
+    "map": 0.034653174603174595,
+    "n": 2000
+  },
+  "test_refreshed_valweights": {
+    "ndcg": 0.1073070439760666
+  },
+  "test_refreshed_deployed": {
+    "ndcg": 0.10641944870004398
+  },
+  "split": {
+    "t1": "2021-06-26",
+    "t2": "2022-05-01"
+  }
+}
