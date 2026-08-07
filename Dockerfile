@@ -1,12 +1,17 @@
 FROM python:3.11-slim
 
 WORKDIR /app
-ENV PYTHONUNBUFFERED=1 HF_HOME=/app/.hf
+ENV PYTHONUNBUFFERED=1 HF_HOME=/app/.hf HF_HUB_OFFLINE=0
 
-# CPU torch + deps. Prebuilt FAISS/BM25/embeddings are committed under data/processed,
-# so the image needs no model-build step at runtime.
+# Deps first (cache-friendly). requirements.txt pins the CPU-only torch wheel, so no
+# multi-GB CUDA stack is pulled.
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
+
+# Bake the embedding model INTO the image so first request is instant and the app
+# works fully offline (no HuggingFace download at runtime).
+RUN python -c "from sentence_transformers import SentenceTransformer; \
+SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')"
 
 COPY app ./app
 COPY scripts ./scripts

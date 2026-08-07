@@ -1,0 +1,16 @@
+.git
+.gitignore
+data/raw
+docs
+*.ipynb
+tests
+__pycache__
+**/__pycache__
+*.pyc
+.venv
+.env
+.hf
+README.md
+DECISIONS.md
+BUILD_PLAN.md
+CLAUDE.md

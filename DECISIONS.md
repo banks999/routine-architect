@@ -36,6 +36,17 @@ repeat after closing the tab. "Ranking is the wrong abstraction for skincare" is
 
 <!-- Append new entries below. Newest last. -->
 
+## [H+13] Docker build fixes — CPU-only torch, pinned versions, baked-in model
+
+Clean-clone `docker compose up` surfaced a ~7 GB / 20-min build. Three fixes:
+**1. CPU-only torch.** The default PyPI resolve pulled torch 2.13.0 **plus the full CUDA stack** (nvidia-cublas/cudnn/nccl/cusparselt, triton) — several GB of GPU libraries for one small CPU embedding model. Added `--extra-index-url https://download.pytorch.org/whl/cpu` and pinned `torch==2.12.1+cpu`. Verified locally: sentence-transformers imports and encodes (384-dim, `cuda.is_available()==False`). **This is the headline saving — the CUDA libraries, not torch itself (torch is ~520 MB either way).**
+**2. Pinned every version.** Nothing was pinned, so the build grabbed bleeding-edge (fastapi 0.141, pandas 3.0, numpy 2.4, starlette 1.4) that could resolve differently next week. Pinned all direct deps to the working set + the **whole google/grpc chain** (google-generativeai, google-ai-generativelanguage, grpcio, grpcio-status, protobuf, proto-plus, google-api-core, google-auth) — that chain was the resolver backtracking through ~15 grpcio-status versions ("this is taking longer than usual"). `pip check` on the pinned set is clean.
+**3. Baked in the model.** Dockerfile now pre-downloads `all-MiniLM-L6-v2` into the image (`HF_HOME=/app/.hf`), so first request is instant and the app works fully offline (no HuggingFace fetch at runtime).
+**Also:** `.dockerignore` excludes `.git`, `data/raw`, `docs/`, `*.ipynb`, tests, `.hf`, `.venv` — keeps the build context small (data/raw is the multi-GB Kaggle dump).
+**Image size / build time:** could NOT measure here (no Docker daemon in this env — same limitation flagged at H+11). Grounded estimate: **~1.5 GB image / ~5–8 min build** (base-slim 150 MB + torch-cpu 520 MB + transformers/scipy/sklearn/pandas ~700 MB + model 90 MB + data 30 MB), vs the ~7 GB / 20-min CUDA build. User is re-running on a real machine for the actuals.
+**Document-worthy note:** "cut the image from ~7 GB to ~1.5 GB by installing CPU-only torch instead of the default CUDA build" — a concrete production-thinking signal.
+**Doc §:** appendix B (run instructions), 12 (what I'd do for real — build/deploy hygiene).
+
 ## [H+12.5] Phase 1b — budget-aware greedy baseline isolates the solver's contribution
 
 **Added `budget_greedy` (same interface):** split budget evenly across 5 slots, take the top-ranked product that fits each slot's share (cheapest if none fits). No conflict awareness, no AM/PM scheduling — what a competent engineer ships without a solver.
