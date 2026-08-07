@@ -203,12 +203,22 @@ def _finalize(placements: list, profile: Profile) -> Routine:
 
 
 def solve(candidates_by_slot: dict, profile: Profile,
-          beam_width: int = 20, cand_k: int = 20, enforce_conflicts: bool = True) -> Routine:
+          beam_width: int = 20, cand_k: int = 20, enforce_conflicts: bool = True,
+          pinned: list | None = None) -> Routine:
     """enforce_conflicts=False disables the constraint layer (the §6 sanity test:
     recommendations must still be good/personalised without it — the ranker, not the
-    conflict engine, is what makes them good)."""
-    beams = [[]]
+    conflict engine, is what makes them good).
+
+    pinned = products the user already owns (as Placements). They pre-seed every beam:
+    the solver builds AROUND them (schedules its picks to avoid conflicting with them in
+    a session, and its redundancy penalty discourages duplicating their function). Their
+    price is not charged to the budget (already owned) and their slot is not re-filled."""
+    pinned = pinned or []
+    filled = {pl.slot for pl in pinned}
+    beams = [list(pinned)]
     for slot in SLOT_ORDER:
+        if slot in filled:
+            continue
         pool = _pool(candidates_by_slot, slot)[:cand_k]
         nxt = []
         for basket in beams:

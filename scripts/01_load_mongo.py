@@ -19,6 +19,9 @@ def main():
     db = MongoClient(url)["routine"]
 
     prod = pd.read_parquet(ROOT / "data" / "processed" / "products_enriched.parquet")
+    tp = ROOT / "data" / "processed" / "product_themes.parquet"
+    themes = ({r.product_id: json.loads(r.themes) for r in pd.read_parquet(tp).itertuples()}
+              if tp.exists() else {})
     docs = []
     for r in prod.itertuples():
         docs.append({"_id": r.product_id, "product_name": r.product_name, "brand_name": r.brand_name,
@@ -27,6 +30,7 @@ def main():
                      "slot": r.slot if pd.notna(r.slot) else None,
                      "routine_eligible": bool(r.routine_eligible),
                      "function_vector": json.loads(r.function_vector),
+                     "themes": themes.get(r.product_id, []),
                      "highlights": r.highlights if pd.notna(r.highlights) else None})
     db.products.drop()
     db.products.insert_many(docs)

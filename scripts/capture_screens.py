@@ -47,6 +47,11 @@ def main():
         page.wait_for_timeout(400)
         page.screenshot(path=str(OUT / "04_debug_panel.png"), full_page=True)
 
+        # 5. owned product pinned + §5.5 resolution ladder
+        page.click("button.preset[data-i='4']")
+        wait_results(page)
+        page.screenshot(path=str(OUT / "05_owned_pinned.png"), full_page=True)
+
         b.close()
     print("saved:", *[f.name for f in sorted(OUT.glob('*.png'))])
 

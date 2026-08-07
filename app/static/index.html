@@ -46,6 +46,9 @@
       <div><label class="text-xs font-semibold text-slate-500">Experience</label>
         <select id="experience" class="w-full border rounded-lg p-2 mt-1 text-sm">
           <option>beginner</option><option selected>intermediate</option><option>advanced</option></select></div>
+      <div><label class="text-xs font-semibold text-slate-500">Products you already use
+          <span class="text-slate-400 font-normal">(one per line)</span></label>
+        <textarea id="owned" rows="2" placeholder="e.g. The Ordinary Granactive Retinoid 2%" class="w-full border rounded-lg p-2 mt-1 text-sm"></textarea></div>
       <button id="go" class="w-full bg-pink text-white rounded-lg py-2 font-semibold">Build my routine</button>
     </aside>
 
@@ -67,10 +70,11 @@
 const CONCERNS=["aging","texture","acne","dark_spots","dullness","redness","dryness","oiliness"];
 const EXCL=["fragrance","essential oils","pregnancy-safe only","alcohol"];
 const PRESETS=[
-  {label:"✨ Anti-aging + texture",skin:"combination",concerns:["aging","texture"],budget:12000},
-  {label:"🔴 Oily & acne-prone (forces AM/PM split)",skin:"oily",concerns:["acne","aging"],budget:9000},
-  {label:"🌟 Brightening & dullness",skin:"dry",concerns:["dark_spots","dullness"],budget:14000},
-  {label:"💸 Tight ₹5,000 budget",skin:"oily",concerns:["acne","aging"],budget:5000},
+  {label:"✨ Anti-aging + texture",skin:"combination",concerns:["aging","texture"],budget:12000,owned:[]},
+  {label:"🔴 Oily & acne-prone (forces AM/PM split)",skin:"oily",concerns:["acne","aging"],budget:9000,owned:[]},
+  {label:"🌟 Brightening & dullness",skin:"dry",concerns:["dark_spots","dullness"],budget:14000,owned:[]},
+  {label:"💸 Tight ₹5,000 budget",skin:"oily",concerns:["acne","aging"],budget:5000,owned:[]},
+  {label:"🧴 I already use retinol (build around it)",skin:"combination",concerns:["texture","acne"],budget:9000,owned:["The Ordinary Granactive Retinoid 2% Emulsion"]},
 ];
 let constraintsOn=true, lastProfile=null;
 
@@ -86,6 +90,7 @@ budget.oninput=()=>budgetLabel.textContent="₹"+(+budget.value).toLocaleString(
 document.querySelectorAll(".preset").forEach(b=>b.onclick=()=>{
   const p=PRESETS[b.dataset.i]; skin.value=p.skin; budget.value=p.budget; budget.oninput();
   document.querySelectorAll(".conc").forEach(x=>x.checked=p.concerns.includes(x.value));
+  owned.value=(p.owned||[]).join("\n");
   run();
 });
 go.onclick=run;
@@ -102,6 +107,7 @@ function gather(){
     concerns:[...document.querySelectorAll(".conc:checked")].map(x=>x.value),
     budget_inr:+budget.value,
     exclusions:[...document.querySelectorAll(".excl:checked")].map(x=>x.value),
+    owned:owned.value.split("\n").map(s=>s.trim()).filter(Boolean),
     experience:experience.value};
 }
 async function run(keepProfile){
@@ -117,14 +123,36 @@ async function run(keepProfile){
 
 const money=x=>"₹"+Math.round(x).toLocaleString("en-IN");
 const chip=(t,cls="bg-pink/10 pink")=>`<span class="text-[11px] px-2 py-[2px] rounded-full ${cls}">${t}</span>`;
+const CONF={verified:"bg-emerald-100 text-emerald-700",user_supplied:"bg-emerald-100 text-emerald-700",
+  manual:"bg-amber-100 text-amber-700",inferred:"bg-rose-100 text-rose-700"};
 function card(c){
+  if(c.owned){
+    const badge=`<span class="text-[10px] px-2 py-[2px] rounded-full ${CONF[c.confidence]||'bg-slate-100'}">Tier ${c.tier} · ${c.confidence}</span>`;
+    const warn=!c.conflict_checkable
+      ? `<div class="text-[11px] text-rose-700 bg-rose-50 border border-rose-200 rounded p-1 mt-1">⚠️ ${c.why}</div>`:"";
+    return `<div class="border-2 border-dashed border-pink/50 rounded-lg p-3 bg-pink/5">
+      <div class="flex justify-between gap-2"><div class="font-semibold text-sm">${c.name}</div>
+        <span class="text-[10px] uppercase bg-pink text-white px-2 py-[2px] rounded-full h-fit">you own this</span></div>
+      <div class="text-[11px] text-slate-400 uppercase">${c.slot.replace("_"," ")} · pinned</div>
+      <div class="flex flex-wrap gap-1 my-1">${badge}${c.actives.map(a=>chip(a.replace(/_/g," "))).join("")}</div>
+      ${warn||`<p class="text-xs text-slate-500 mt-1">${c.why}</p>`}</div>`;
+  }
+  const themes=(c.themes||[]).map(t=>`<span class="text-[11px] px-2 py-[2px] rounded-full bg-slate-100 text-slate-600">“${t}”</span>`).join("");
+  const snips=(c.grounding||[]).map(s=>
+    `<div class="border-l-2 border-pink pl-2 mt-1"><span class="text-[10px] uppercase bg-pink/10 pink px-1 rounded">${s.skin} skin</span>
+       <span class="italic">“${s.text}”</span></div>`).join("");
+  const grounding = (c.grounding&&c.grounding.length)
+    ? `<div class="mt-2"><div class="text-[11px] text-slate-400 mb-1">Grounded in ${c.n_matched_reviews} matched-skin reviews — e.g.:</div>${snips}</div>`
+    : "";
   return `<div class="border rounded-lg p-3">
     <div class="flex justify-between gap-2"><div class="font-semibold text-sm">${c.name}</div>
       <div class="text-sm font-bold whitespace-nowrap">${money(c.price_inr)}</div></div>
     <div class="text-[11px] text-slate-400 uppercase">${c.slot.replace("_"," ")}</div>
     <div class="flex flex-wrap gap-1 my-1">${c.actives.map(a=>chip(a.replace(/_/g," "))).join("")||'<span class="text-[11px] text-slate-400">no flagged actives</span>'}</div>
     <details class="text-xs text-slate-600"><summary class="cursor-pointer pink">why this for you</summary>
-      <p class="mt-1">${c.why}</p></details></div>`;
+      <p class="mt-1">${c.why}</p>
+      ${themes?`<div class="flex flex-wrap gap-1 mt-2">${themes}</div>`:""}
+      ${grounding}</details></div>`;
 }
 function board(title,items,tint){
   return `<div class="bg-white rounded-xl shadow-sm p-4">
@@ -168,7 +196,20 @@ function render(d){
         ${Object.entries(lat).map(([k,v])=>`<div>${k}: <b>${v}</b></div>`).join("")}</div>
     </div></details>`;
 
-  results.innerHTML = banner + board("☀️ Morning (AM)",d.am) + board("🌙 Night (PM)",d.pm) + panel + cautions + dbg;
+  // resolution ladder for owned products
+  let ladder="";
+  if(d.resolutions&&d.resolutions.length){
+    ladder=`<div class="bg-white rounded-xl shadow-sm p-4"><h3 class="font-bold mb-2">🧩 Products you already use — resolved (§5.5)</h3>
+      <div class="space-y-2 text-sm">`+d.resolutions.map(r=>{
+        const ok=r.conflict_checkable;
+        return `<div class="border rounded-lg p-2 ${ok?"":"border-rose-300 bg-rose-50"}">
+          <div class="flex justify-between"><b>“${r.query}”</b>
+            <span class="text-[11px] px-2 py-[2px] rounded-full ${CONF[r.confidence]||'bg-slate-100'}">Tier ${r.tier} · ${r.method} · ${r.confidence}</span></div>
+          <div class="text-xs text-slate-600 mt-1">→ ${r.name}${r.classes.length?` · <span class="text-slate-400">${r.classes.join(", ")}</span>`:""}</div>
+          <div class="text-[11px] mt-1 ${ok?"text-emerald-600":"text-rose-600 font-semibold"}">${ok?"✓ full conflict checking":"✗ conflict checking disabled — "+r.note}</div></div>`;
+      }).join("")+`</div></div>`;
+  }
+  results.innerHTML = banner + ladder + board("☀️ Morning (AM)",d.am) + board("🌙 Night (PM)",d.pm) + panel + cautions + dbg;
 }
 paintToggle();
 </script>

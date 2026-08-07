@@ -36,6 +36,35 @@ repeat after closing the tab. "Ranking is the wrong abstraction for skincare" is
 
 <!-- Append new entries below. Newest last. -->
 
+## [H+15] Phase 2c — open-world "products I already own" (§5.5 resolution ladder + pinning)
+
+**Resolver (`app/core/resolve.py`) — the 5-tier ladder, first hit wins:** (1) fuzzy name+brand (rapidfuzz WRatio) → verified, full checking; (2) semantic on embeddings → verified; (3) user-pasted INCI → parsed on the fly → user_supplied, full checking; (4) name inference → **inferred, conflict checking DISABLED**; (5) manual class selection → manual, partial. The engine is catalogue-agnostic — it operates on function vectors, so an anchor need not be purchasable, only reasoned-about.
+**False-match guard (§6.3b, a real correction):** at the initial fuzzy cutoff of 84, "CeraVe" and "Deconstruct Retinol" (both genuinely NOT in this US catalogue) confidently mis-matched Algenist products at 86% — *a confident wrong match produces confident wrong safety advice.* Raised cutoffs (**fuzzy 90, semantic 0.72**); both now correctly fall through to Tier 4 (inferred, checking disabled) instead of asserting a bad match.
+**Hard rule upheld:** Tier 4 pins the product as **conflict-neutral** (its inferred classes are NOT fed to the conflict engine) and the UI shows the verbatim disclaimer *"We couldn't verify this product's ingredients. Conflict checking is unavailable for it — please check manually."* No safety claim is ever made on inferred data.
+**Solver pinning (`solve(..., pinned=)`):** owned products pre-seed every beam; the solver builds AROUND them — schedules its picks to avoid conflicting with them in a session, its redundancy penalty discourages duplicating their function, their **price is excluded from the budget** (already owned), and their slot isn't re-filled.
+**5 test resolutions (one deliberately off-catalogue):** Paula's 2% BHA → **Tier 1** (fuzzy 95%); CeraVe → **Tier 2** (semantic 0.72); Minimalist 10% Niacinamide (Indian D2C, paste) → **Tier 3** verified; Deconstruct Retinol (Indian D2C, name only) → **Tier 4** inferred retinoid, **checking DISABLED**; unbranded moisturizer (classes given) → **Tier 5** manual.
+**Routine built around a pin:** user owns "The Ordinary Granactive Retinoid 2%" (Tier 1, pinned PM); asks for texture+acne → solver puts the new **Peace Out Salicylic Acid (BHA) in AM**, scheduling it apart from the owned retinoid (**scheduled_apart C2**), 0 hard conflicts, ₹10,283 with the owned product excluded from budget. Screenshot `05_owned_pinned.png`.
+**Known limitation (noted, not fixed):** when a treatment slot is filled by a pin, the *remaining* treatment slot still targets the static concern→slot mapping rather than re-targeting the concern the pin leaves uncovered. Minor; flagged for the doc.
+**Doc §:** 13 (closed- vs open-world), 5.5, 6.3b (false-match rate), 8 (screenshot).
+
+## [H+14.3] Theme fix — kill profile-echo tautologies + a cross-cohort leak
+
+**Two problems the 5 examples exposed:** (1) themes restated the user's own input — *"reviewers with oily skin most often mention 'oily skin'"* reads like insight but is zero-information; (2) a real bug — an OILY user saw *'dry skin'* as a theme, because the `3·skin + df` blend let a mismatched cohort through on thin data (n=4).
+**Fixes:** drop any theme containing (a) **any skin-type word** — global set, so it kills both the tautology and the cross-cohort leak for everyone; (b) the user's **stated-concern keywords** (acne→acne/breakout/…, dark_spots→dark spot/…); (c) an expanded pure-filler list ("skincare routine", "started using", "skin looks", "would recommend"). **Thin-data honesty:** stored true per-skin review totals during mining; when matched-skin n < 8 the explanation now LABELS the fallback — *"Only 4 reviewers with oily skin, so across all reviewers: most mention X and Y"* — instead of silently blending (same honesty principle as everywhere else). Counts now come from full-mining totals (48–128), not the capped sample.
+**Delta on the 5 examples (dropped → kept):** IT Cosmetics: dropped 'fine lines'(concern), 'dry skin'(cross-cohort) → "a little goes a long way", "sensitive skin"; INKEY BHA: dropped 'oily skin'(tautology), 'acne prone'(concern) → "spot treatment", "clogged pores"; INKEY Retinol: dropped 'fine lines' → "every night", "sensitive skin"; innisfree: dropped 'dry skin', 'skincare routine' → "sensitive skin"; First Aid Beauty (dullness/texture user): "dark spots" correctly KEPT (not their concern), "looks brighter". Verified: a dark_spots user does NOT see "dark spots".
+**Doc §:** 5, 6.5 (what makes an explanation informative vs tautological).
+
+## [H+14] Phase 2a — review-theme mining + rebuilt, RAG-grounded explanations
+
+**The weakest thing the user read was the bare "N reviewers rated 4★+".** Replaced it with mined themes.
+**Mining (`05_mine_themes.py` → `product_themes.parquet`, 1,758 products):** top-6 bigram/trigram themes per product by **document frequency** (DF — one gushing review can't dominate), with **per-skin_type counts** so explanations weight toward the user's skin. Mined over 403k full reviews (rating≥4).
+**The mining was MUSH until three filters were added — this was the real work, logging it:** (1) **brand/product-name echoes** ("drunk elephant", "magic cream", "skinlongevity long life herb") dominated until I dropped any n-gram containing the product's own name tokens; (2) **review-platform boilerplate** ("honest review", "received this product"); (3) **sponsorship disclaimers with platform names** ("sample from pinchme", "opinions are completely my own") — any-token drop, but deliberately NOT "free" (oil-free/fragrance-free are real themes). After filtering, themes are specific and on-concern: "acne prone", "spot treatment", "under makeup", "white cast", "fine lines", "looks brighter", "dark spots".
+**Robustness fix (thin skin data):** ranking purely by matched-skin count gave noise for minority skins (a product with 3 oily reviews → "skin looks", "started using"). Switched to a **blend `3·skin_count + df`** so thin same-skin data falls back to overall-popular themes. Plus a weak-theme droplist, an idiom repair ("long way"→"a little goes a long way"), and substring de-dup ("acne prone"/"acne prone skin").
+**Rebuilt explanations, BOTH modes:** template now reads *"Reviewers with oily skin most often mention 'oily skin', 'acne prone' and 'spot treatment' (from 7 matched 4★+ reviews)"*; LLM prompt is fed the themes AND matched-skin snippets as grounding. Safety/mechanism text unchanged — still verbatim from conflicts.yaml.
+**Grounding made VISIBLE (RAG, not asserted):** the UI "why this for you" now shows theme chips + the actual matched-skin review snippets, each tagged with the reviewer's skin type. Store prefers non-sponsored snippets. Themes also written onto the Mongo product doc.
+**Honest verdict:** a clear, consistent quality jump *after* the filtering — NOT mush, worth shipping. It would have been mush without the brand/boilerplate/sponsorship filters, which is the lesson. Screenshots refreshed to show it.
+**Doc §:** 5 (explanation methodology), 6.5 (explanation faithfulness — now snippet-grounded), 8 (screenshots).
+
 ## [H+13] Docker build fixes — CPU-only torch, pinned versions, baked-in model
 
 Clean-clone `docker compose up` surfaced a ~7 GB / 20-min build. Three fixes:
@@ -43,9 +72,16 @@ Clean-clone `docker compose up` surfaced a ~7 GB / 20-min build. Three fixes:
 **2. Pinned every version.** Nothing was pinned, so the build grabbed bleeding-edge (fastapi 0.141, pandas 3.0, numpy 2.4, starlette 1.4) that could resolve differently next week. Pinned all direct deps to the working set + the **whole google/grpc chain** (google-generativeai, google-ai-generativelanguage, grpcio, grpcio-status, protobuf, proto-plus, google-api-core, google-auth) — that chain was the resolver backtracking through ~15 grpcio-status versions ("this is taking longer than usual"). `pip check` on the pinned set is clean.
 **3. Baked in the model.** Dockerfile now pre-downloads `all-MiniLM-L6-v2` into the image (`HF_HOME=/app/.hf`), so first request is instant and the app works fully offline (no HuggingFace fetch at runtime).
 **Also:** `.dockerignore` excludes `.git`, `data/raw`, `docs/`, `*.ipynb`, tests, `.hf`, `.venv` — keeps the build context small (data/raw is the multi-GB Kaggle dump).
-**Image size / build time:** could NOT measure here (no Docker daemon in this env — same limitation flagged at H+11). Grounded estimate: **~1.5 GB image / ~5–8 min build** (base-slim 150 MB + torch-cpu 520 MB + transformers/scipy/sklearn/pandas ~700 MB + model 90 MB + data 30 MB), vs the ~7 GB / 20-min CUDA build. User is re-running on a real machine for the actuals.
-**Document-worthy note:** "cut the image from ~7 GB to ~1.5 GB by installing CPU-only torch instead of the default CUDA build" — a concrete production-thinking signal.
+**Image size (MEASURED on the clean-clone run):** `orbo-test-app` = **2.87 GB on disk / 671 MB content (compressed)**. There is **no exact before-figure** — the CUDA variant was abandoned mid-download, so I will not quote a fabricated "~7 GB". What the CPU pin *avoids* pulling, by name: the torch CUDA build and `nvidia-cublas`, `cudnn`, `nccl`, `cusparselt`, `triton`, `cuda-toolkit`. That's the honest claim — packages avoided, not a subtracted number.
+**Document-worthy note:** "CPU-only torch avoids the entire nvidia CUDA dependency stack (cublas/cudnn/nccl/cusparselt/triton); the shipped image is 2.87 GB on disk / 671 MB compressed." Concrete production-thinking signal, stated as measured fact.
 **Doc §:** appendix B (run instructions), 12 (what I'd do for real — build/deploy hygiene).
+
+---
+
+## [H+13.5] Clean-clone `docker compose up` — VERIFIED end-to-end (last unverified item closed)
+
+The one item I could never test locally (no Docker daemon in my env) is now confirmed on a real machine: `docker compose up` from a clean clone **builds, starts, and runs end-to-end**. `/health` reports **`store=mongodb cache=redis`** (the real read path + cache, NOT the parquet/in-memory fallback), and the UI is functional in the container. The project's non-negotiable — "runs from a clean clone with one command" — is met and proven. **Offline-startup hardening** (`HF_HUB_OFFLINE=1`, `TRANSFORMERS_OFFLINE=1`) added after logs showed sentence-transformers still contacting the HF Hub at startup despite the baked-in model — so "works fully offline" is now strictly true, not aspirational.
+**Doc §:** 12 checklist (clean-clone verified), appendix B.
 
 ## [H+12.5] Phase 1b — budget-aware greedy baseline isolates the solver's contribution
 

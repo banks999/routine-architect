@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 
 from app.core import conflicts as cf
+from app.core import resolve as rz
 from app.core import retrieval as ret
 from app.core import solver as sv
 from app.core.ingredients import present_classes
@@ -20,6 +21,9 @@ DEPLOYED = {"semantic": 0.3, "cf": 0.5, "rating": 0.1, "skin": 0.1}
 
 _prod = pd.read_parquet(ROOT / "data" / "processed" / "products_enriched.parquet")
 _priors = pd.read_parquet(ROOT / "data" / "processed" / "rank_priors.parquet").set_index("product_id")
+_themes_path = ROOT / "data" / "processed" / "product_themes.parquet"
+THEMES = ({r.product_id: json.loads(r.themes) for r in pd.read_parquet(_themes_path).itertuples()}
+          if _themes_path.exists() else {})
 _e = np.load(ROOT / "data" / "processed" / "emb_all.npz", allow_pickle=True)
 EMB = dict(zip(_e["ids"], _e["emb"]))
 META = {r.product_id: r for r in _prod.itertuples()}
@@ -33,6 +37,46 @@ CONCERN_QUERY = {
     "dryness": "hyaluronic acid hydrating serum", "oiliness": "niacinamide serum for oily skin",
 }
 BASE_Q = {"cleanser": "gentle cleanser", "moisturizer": "hydrating moisturizer", "spf": "sunscreen spf"}
+
+# catalogue view for the open-world resolver (§5.5)
+CTX = rz.Ctx(
+    names=[(r.product_id, f"{r.brand_name} — {r.product_name}") for r in _prod.itertuples()],
+    classes=CLASSES,
+    price={r.product_id: (float(r.price_inr) if pd.notna(r.price_inr) else None) for r in _prod.itertuples()},
+    slot={r.product_id: (r.slot if pd.notna(r.slot) else None) for r in _prod.itertuples()},
+    ingredients={r.product_id: (r.ingredients if isinstance(r.ingredients, str) else "") for r in _prod.itertuples()},
+)
+
+
+def _pin_session(slot: str, classes: frozenset) -> frozenset:
+    if slot in ("cleanser", "moisturizer"):
+        return sv.BOTH
+    if slot == "spf":
+        return frozenset({"AM"})
+    allowed = sv._hard_allowed(classes)
+    pref = "PM" if (classes & cf.PHOTOSENSITISERS) else "AM"
+    return frozenset({pref if pref in allowed else next(iter(allowed))})
+
+
+def _resolve_owned(owned: list):
+    """Resolve each owned product via the ladder, pin the resolvable ones into the basket."""
+    pinned, meta, resolutions = [], {}, []
+    t_idx = 0
+    for q in owned:
+        r = rz.resolve(q, CTX, emb=EMB, model=ret.get_model())
+        resolutions.append(r)
+        slot = r.slot or "treatment"
+        if slot == "treatment":
+            if t_idx >= 2:      # only two treatment slots; pin the first two
+                continue
+            slot = ("treatment_A", "treatment_B")[t_idx]; t_idx += 1
+        cls = r.classes if r.conflict_checkable else frozenset()   # Tier 4 -> conflict-neutral
+        cid = r.matched_id or f"owned::{q}"
+        cand = sv.Candidate(cid, r.name, 0.0, cls, {}, 0.0, slot)   # price 0 = already owned
+        pinned.append(sv.Placement(cand, slot, _pin_session(slot, cls)))
+        meta[cid] = {"owned": True, "confidence": r.confidence, "tier": r.tier, "method": r.method,
+                     "conflict_checkable": r.conflict_checkable, "note": r.note}
+    return pinned, meta, resolutions
 
 
 def _z(a):
@@ -71,15 +115,85 @@ def build_candidates(profile: sv.Profile):
             "treatment_B": _cands(CONCERN_QUERY.get(c2, c2), "treatment_B", profile.skin)}
 
 
-def _template_explain(skin, concerns, n_rev, snippets, classes):
+_PHRASE_FIX = {"long way": "a little goes a long way", "little goes": "a little goes a long way",
+               "goes long": "a little goes a long way", "little goes long": "a little goes a long way"}
+_WEAK = {"skin looks", "skin feeling", "skin care", "skincare routine", "really like", "started using",
+         "skin tone", "smells like", "every other", "prone skin", "would recommend", "highly recommend",
+         "skin type", "morning and", "night and", "well under", "the day"}
+# ALL skin-type words -> dropping these kills both the tautology ("oily" theme for an oily
+# user) AND the cross-cohort leak ("dry" theme for an oily user), for everyone.
+_SKIN_WORDS = {"oily", "oil", "greasy", "oiliness", "shiny", "dry", "dryness", "flaky", "flaking",
+               "combination", "combo", "normal"}
+_CONCERN_ECHO = {
+    "acne": {"acne", "breakout", "breakouts", "blemish", "blemishes", "pimple", "pimples"},
+    "aging": {"aging", "ageing", "wrinkle", "wrinkles", "fine line", "fine lines", "anti aging"},
+    "dark_spots": {"dark spot", "dark spots", "hyperpigmentation", "discoloration"},
+    "dullness": {"dull", "dullness"},
+    "texture": {"texture", "rough", "bumpy"},
+    "redness": {"redness"},
+    "dryness": {"dry", "dryness", "flaky"},
+    "oiliness": {"oily", "oil", "greasy", "shiny"},
+}
+THIN_SKIN = 8  # below this many matched-skin reviews, label the all-reviewer fallback
+
+
+def _echo_words(concerns) -> set:
+    e = set(_SKIN_WORDS)
+    for c in concerns:
+        e |= _CONCERN_ECHO.get(c, set())
+    return e
+
+
+def _themes_for(pid: str, skin: str, concerns, k: int = 3):
+    """Returns (themes, fallback, n_matched_skin). Drops themes that restate the user's
+    profile (skin type/synonyms + stated concerns) or any skin-type word (no cross-cohort
+    leak) or pure filler. When same-skin reviews are thin (<THIN_SKIN), ranks by overall df
+    and flags fallback so the explanation can say so honestly."""
+    data = THEMES.get(pid) or {}
+    ts, totals = data.get("themes", []), data.get("skin_totals", {})
+    n_skin = totals.get(skin, 0)
+    echo = _echo_words(concerns)
+
+    def ok(ph):
+        return ph not in _WEAK and not any(w in ph for w in echo)
+    cand = [t for t in ts if ok(t["phrase"])]
+
+    fallback = n_skin < THIN_SKIN
+    if fallback:
+        ranked = sorted(cand, key=lambda t: t.get("df", 0), reverse=True)
+    else:
+        ranked = sorted(cand, key=lambda t: (t.get("skins", {}).get(skin, 0), t.get("df", 0)), reverse=True)
+
+    out = []
+    for t in ranked:
+        p = _PHRASE_FIX.get(t["phrase"], t["phrase"])
+        if any(p in q or q in p for q in out):
+            continue
+        out.append(p)
+        if len(out) >= k:
+            break
+    return out, fallback, n_skin
+
+
+def _join(xs: list[str]) -> str:
+    xs = [f"“{x}”" for x in xs]
+    return xs[0] if len(xs) == 1 else ", ".join(xs[:-1]) + " and " + xs[-1]
+
+
+def _template_explain(skin, themes, fallback, n_skin, classes):
     bits = []
-    if n_rev:
-        bits.append(f"{n_rev} reviewers with {skin} skin rated this 4★ or higher.")
+    if themes:
+        if n_skin == 0:
+            bits.append(f"Reviewers most often mention {_join(themes)}.")
+        elif fallback:
+            bits.append(f"Only {n_skin} reviewer{'s' if n_skin != 1 else ''} with {skin} skin, so across "
+                        f"all reviewers: most mention {_join(themes)}.")
+        else:
+            bits.append(f"Reviewers with {skin} skin most often mention {_join(themes)} "
+                        f"(from {n_skin} matched 4★+ reviews).")
     actives = sorted(classes & sv._active_classes())
     if actives:
         bits.append("Active(s): " + ", ".join(a.replace("_", " ") for a in actives) + ".")
-    if snippets:
-        bits.append(f"One wrote: “{snippets[0][:150].strip()}”")
     return " ".join(bits) or "Matched to your profile on content similarity and rating."
 
 
@@ -95,9 +209,10 @@ async def _gemini_explain(context: list) -> dict | None:
     def _call():
         import google.generativeai as genai
         genai.configure(api_key=key)
-        prompt = ("For each product, write ONE friendly sentence on why it fits the user, using ONLY the "
-                  "provided review snippets and actives. Do NOT invent ingredients or make safety/medical "
-                  "claims. Return ONLY JSON {product_id: sentence}.\n" + json.dumps(context)[:6000])
+        prompt = ("For each product, write ONE friendly sentence on why it fits this user, grounded ONLY in "
+                  "the provided review themes, matched-skin snippets and actives. Reference what reviewers with "
+                  "the user's skin type actually said. Do NOT invent ingredients or make safety/medical claims. "
+                  "Return ONLY JSON {product_id: sentence}.\n" + json.dumps(context)[:7000])
         r = genai.GenerativeModel("gemini-1.5-flash").generate_content(
             prompt, request_options={"timeout": 7})
         txt = r.text.strip().removeprefix("```json").removeprefix("```").removesuffix("```").strip()
@@ -111,32 +226,45 @@ async def _gemini_explain(context: list) -> dict | None:
 
 
 async def _explain(placements, profile):
-    context = []
-    tmpl = {}
+    context, tmpl, ground = [], {}, {}
     for pl in placements:
-        n_rev, snip = await store.review_snippets(pl.cand.id, profile.skin, k=3)
-        tmpl[pl.cand.id] = _template_explain(profile.skin, profile.concerns, n_rev, snip, pl.cand.classes)
+        _, snip = await store.review_snippets(pl.cand.id, profile.skin, k=3)
+        themes, fallback, n_skin = _themes_for(pl.cand.id, profile.skin, profile.concerns, k=3)
+        ground[pl.cand.id] = {"themes": themes, "snippets": snip, "n_matched": n_skin, "fallback": fallback}
+        tmpl[pl.cand.id] = _template_explain(profile.skin, themes, fallback, n_skin, pl.cand.classes)
         context.append({"product_id": pl.cand.id, "name": pl.cand.name,
-                        "actives": sorted(pl.cand.classes & sv._active_classes()), "snippets": snip})
+                        "actives": sorted(pl.cand.classes & sv._active_classes()),
+                        "themes": themes, "matched_skin_reviews": n_skin,
+                        "snippets": [s["text"][:200] for s in snip]})
     gem = await _gemini_explain(context)
     source = "gemini" if gem else "template"
-    return {pid: (gem.get(pid) if gem and gem.get(pid) else tmpl[pid]) for pid in tmpl}, source
+    whys = {pid: (gem.get(pid) if gem and gem.get(pid) else tmpl[pid]) for pid in tmpl}
+    return whys, ground, source
 
 
-def _card(pl, why):
-    m = META[pl.cand.id]
-    return {"product_id": pl.cand.id, "slot": pl.slot, "name": pl.cand.name,
+def _card(pl, why, grounding, owned_meta=None):
+    om = (owned_meta or {}).get(pl.cand.id)
+    card = {"product_id": pl.cand.id, "slot": pl.slot, "name": pl.cand.name,
             "price_inr": pl.cand.price, "sessions": sorted(pl.sessions),
             "actives": sorted(pl.cand.classes & sv._active_classes()),
             "all_classes": sorted(pl.cand.classes), "relevance": round(pl.cand.relevance, 3),
-            "highlights": (m.highlights if pd.notna(m.highlights) else None), "why": why}
+            "why": why, "themes": grounding.get("themes", []),
+            "n_matched_reviews": grounding.get("n_matched", 0), "grounding": grounding.get("snippets", [])}
+    if om:  # a product the user already owns, pinned into the routine
+        card.update(owned=True, confidence=om["confidence"], tier=om["tier"], method=om["method"],
+                    conflict_checkable=om["conflict_checkable"], why=om["note"])
+    else:
+        m = META[pl.cand.id]
+        card["highlights"] = m.highlights if pd.notna(m.highlights) else None
+    return card
 
 
-async def recommend(profile: sv.Profile, enforce_conflicts: bool = True) -> dict:
+async def recommend(profile: sv.Profile, enforce_conflicts: bool = True, owned: list | None = None) -> dict:
     t = {}
+    pinned, owned_meta, resolutions = _resolve_owned(owned or [])
     t0 = time.perf_counter(); cands = build_candidates(profile); t["retrieval_and_rank_ms"] = (time.perf_counter()-t0)*1000
-    t0 = time.perf_counter(); routine = sv.solve(cands, profile, enforce_conflicts=enforce_conflicts); t["solve_ms"] = (time.perf_counter()-t0)*1000
-    t0 = time.perf_counter(); whys, src = await _explain(routine.placements, profile); t["explain_ms"] = (time.perf_counter()-t0)*1000
+    t0 = time.perf_counter(); routine = sv.solve(cands, profile, enforce_conflicts=enforce_conflicts, pinned=pinned); t["solve_ms"] = (time.perf_counter()-t0)*1000
+    t0 = time.perf_counter(); whys, ground, src = await _explain(routine.placements, profile); t["explain_ms"] = (time.perf_counter()-t0)*1000
 
     pls = routine.placements
     decomp = {"relevance_sum": round(sum(p.cand.relevance for p in pls), 3),
@@ -148,8 +276,8 @@ async def recommend(profile: sv.Profile, enforce_conflicts: bool = True) -> dict
     return {
         "profile": {"concerns": profile.concerns, "skin": profile.skin, "budget_inr": profile.budget},
         "constraints_enforced": enforce_conflicts,
-        "am": [_card(p, whys[p.cand.id]) for p in sorted(routine.session("AM"), key=lambda x: sv.SLOT_ORDER.index(x.slot))],
-        "pm": [_card(p, whys[p.cand.id]) for p in sorted(routine.session("PM"), key=lambda x: sv.SLOT_ORDER.index(x.slot))],
+        "am": [_card(p, whys[p.cand.id], ground[p.cand.id], owned_meta) for p in sorted(routine.session("AM"), key=lambda x: sv.SLOT_ORDER.index(x.slot))],
+        "pm": [_card(p, whys[p.cand.id], ground[p.cand.id], owned_meta) for p in sorted(routine.session("PM"), key=lambda x: sv.SLOT_ORDER.index(x.slot))],
         "total_price_inr": routine.total_price, "within_budget": routine.total_price <= profile.budget * 1.15,
         "hard_violations": [_viol(v) for v in routine.hard_violations],
         "avoided": [{"action": a.action, "rule_id": a.rule_id, "severity": a.severity, "mechanism": a.mechanism,
@@ -158,6 +286,9 @@ async def recommend(profile: sv.Profile, enforce_conflicts: bool = True) -> dict
         "cautions": [_viol(v) for v in routine.cautions],
         "score_decomposition": decomp, "explanation_source": src, "latency_ms": {k: round(v, 1) for k, v in t.items()},
         "backend": store.backend,
+        "resolutions": [{"query": r.query, "name": r.name, "tier": r.tier, "method": r.method,
+                         "confidence": r.confidence, "conflict_checkable": r.conflict_checkable,
+                         "classes": sorted(r.classes), "note": r.note} for r in resolutions],
     }
 
 

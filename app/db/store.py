@@ -48,20 +48,25 @@ class Store:
                 "primary_category": r.get("primary_category"), "slot": r.get("slot"),
                 "highlights": r.get("highlights")}
 
-    async def review_snippets(self, pid: str, skin: str, k: int = 3) -> tuple[int, list[str]]:
-        """(#4+ reviews from matched-skin users, up to k snippet strings)."""
+    async def review_snippets(self, pid: str, skin: str, k: int = 3) -> tuple[int, list[dict]]:
+        """(# of 4★+ matched-skin reviews, up to k skin-tagged snippet dicts) — the RAG
+        grounding shown in the UI."""
         if self._db is not None:
             cur = self._db.reviews.find({"product_id": pid, "skin_type": skin, "rating": {"$gte": 4}},
-                                        {"review_text": 1}).limit(50)
+                                        {"review_text": 1, "skin_type": 1}).limit(50)
             rows = [d async for d in cur]
-            texts = [d.get("review_text", "") for d in rows]
+            texts = [(d.get("review_text", ""), d.get("skin_type", skin)) for d in rows]
         else:
-            if self._reviews.empty:
+            if self._reviews is None or self._reviews.empty:  # store not connected / no reviews
                 return 0, []
             m = self._reviews[(self._reviews["product_id"] == pid)
                               & (self._reviews["skin_type"] == skin)]
-            texts = m["review_text"].dropna().astype(str).tolist()
-        snippets = [t for t in texts if 40 < len(t) < 300][:k]
+            texts = [(t, skin) for t in m["review_text"].dropna().astype(str).tolist()]
+        _spam = ("complimentary", "received this", "in exchange", "voxbox", "influenster",
+                 "pinchme", "for testing", "was sent", "gifted", "for free in")
+        clean = [(t, s) for t, s in texts if not any(w in str(t).lower() for w in _spam)]
+        pick = (clean or texts)  # prefer non-sponsored snippets; fall back if none
+        snippets = [{"text": t.strip(), "skin": s} for t, s in pick if 40 < len(str(t)) < 300][:k]
         return len(texts), snippets
 
 
