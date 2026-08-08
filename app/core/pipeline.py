@@ -281,9 +281,7 @@ async def recommend(profile: sv.Profile, enforce_conflicts: bool = True, owned: 
         "pm": [_card(p, whys[p.cand.id], ground[p.cand.id], owned_meta) for p in sorted(routine.session("PM"), key=lambda x: sv.SLOT_ORDER.index(x.slot))],
         "total_price_inr": routine.total_price, "within_budget": routine.total_price <= profile.budget * 1.15,
         "hard_violations": [_viol(v) for v in routine.hard_violations],
-        "avoided": [{"action": a.action, "rule_id": a.rule_id, "severity": a.severity, "mechanism": a.mechanism,
-                     "classes": f"{a.class_a} × {a.class_b}",
-                     "products": [a.product_a.split("::")[-1], a.product_b.split("::")[-1]]} for a in routine.avoided],
+        "avoided": [_avoided(a, {pl.cand.id for pl in routine.placements}) for a in routine.avoided],
         "cautions": [_viol(v) for v in routine.cautions],
         "score_decomposition": decomp, "explanation_source": src, "latency_ms": {k: round(v, 1) for k, v in t.items()},
         "backend": store.backend,
@@ -291,6 +289,31 @@ async def recommend(profile: sv.Profile, enforce_conflicts: bool = True, owned: 
                          "confidence": r.confidence, "conflict_checkable": r.conflict_checkable,
                          "classes": sorted(r.classes), "note": r.note} for r in resolutions],
     }
+
+
+def _avoided(a, routine_ids: set) -> dict:
+    """Action-typed, truthful wording for the 'conflicts avoided' panel. product_swapped
+    products are NOT in the routine (that's the point of the swap), so name the avoided
+    product and, when one of the pair survived in the routine, the surviving 'your' one."""
+    pa_id, pa_name = a.product_a.split("::", 1)[0], a.product_a.split("::")[-1]
+    pb_id, pb_name = a.product_b.split("::", 1)[0], a.product_b.split("::")[-1]
+    d = {"action": a.action, "rule_id": a.rule_id, "severity": a.severity,
+         "mechanism": a.mechanism, "classes": f"{a.class_a} × {a.class_b}"}
+    if a.action == "scheduled_apart":
+        d["detail"] = "Both kept — split across AM/PM."
+        d["products"] = [pa_name, pb_name]
+    elif a.action == "product_swapped":
+        if pb_id in routine_ids:      # the surviving product is 'yours'; the other was avoided
+            x, y = pa_name, pb_name
+        elif pa_id in routine_ids:
+            x, y = pb_name, pa_name
+        else:
+            x, y = pa_name, None
+        d["detail"] = (f"We avoided {x} because it conflicts with your {y}." if y
+                       else f"We avoided {x} — it conflicts with the top pick for another concern.")
+    else:  # excluded_no_alternative
+        d["detail"] = "No safe alternative found for this slot."
+    return d
 
 
 def _viol(v):

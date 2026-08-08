@@ -86,7 +86,7 @@ CONCERNS.forEach(c=>concerns.insertAdjacentHTML("beforeend",
 EXCL.forEach(c=>exclusions.insertAdjacentHTML("beforeend",
   `<label class="flex items-center gap-1"><input type="checkbox" class="excl accent-pink" value="${c}">${c}</label>`));
 PRESETS.forEach((p,i)=>presets.insertAdjacentHTML("beforeend",
-  `<button data-i="${i}" class="preset border border-pink pink text-sm rounded-full px-3 py-1 hover:bg-pink hover:text-white">${p.label}</button>`));
+  `<button data-i="${i}" class="preset border border-pink pink text-sm rounded-full px-3 py-1 whitespace-nowrap hover:bg-pink hover:text-white">${p.label}</button>`));
 budget.oninput=()=>budgetLabel.textContent="₹"+(+budget.value).toLocaleString("en-IN");
 
 document.querySelectorAll(".preset").forEach(b=>b.onclick=()=>{
@@ -131,10 +131,26 @@ async function run(keepProfile){
 }
 
 const money=x=>"₹"+Math.round(x).toLocaleString("en-IN");
+function budgetText(d){
+  const t=d.profile.budget_inr, a=d.total_price_inr;
+  if(a<=t) return `${money(a)} — within your ${money(t)} target`;
+  const pct=Math.round((a/t-1)*100);
+  if(d.within_budget) return `${money(a)} — ${pct}% over your ${money(t)} target (within 15% tolerance)`;
+  return `<span class="text-rose-600">${money(a)} — ${pct}% over your ${money(t)} target (exceeds 15% tolerance)</span>`;
+}
 const chip=(t,cls="bg-pink/10 pink")=>`<span class="text-[11px] px-2 py-[2px] rounded-full ${cls}">${t}</span>`;
 const CONF={verified:"bg-emerald-100 text-emerald-700",user_supplied:"bg-emerald-100 text-emerald-700",
   manual:"bg-amber-100 text-amber-700",inferred:"bg-rose-100 text-rose-700"};
-function card(c){
+function card(c,isPM){
+  // cleanser/moisturizer run AM+PM; show a compact greyed instance at night so the
+  // duplicate doesn't read as double-billing (the total counts it once).
+  if(isPM && !c.owned && (c.sessions||[]).includes("AM")){
+    return `<div class="border rounded-lg p-3 bg-slate-50 opacity-70">
+      <div class="flex justify-between gap-2 items-start"><div class="font-semibold text-sm text-slate-500">${c.name}</div>
+        <span class="text-[10px] text-slate-400 whitespace-nowrap">same as AM</span></div>
+      <div class="text-[11px] text-slate-400 uppercase">${c.slot.replace("_"," ")}</div>
+      <div class="text-[11px] text-slate-400 mt-1">Applied morning &amp; night — counted once (${money(c.price_inr)}).</div></div>`;
+  }
   if(c.owned){
     const badge=`<span class="text-[10px] px-2 py-[2px] rounded-full ${CONF[c.confidence]||'bg-slate-100'}">Tier ${c.tier} · ${c.confidence}</span>`;
     const warn=!c.conflict_checkable
@@ -165,10 +181,10 @@ function card(c){
       ${themes?`<div class="flex flex-wrap gap-1 mt-2">${themes}</div>`:""}
       ${grounding}</details></div>`;
 }
-function board(title,items,tint){
+function board(title,items,isPM){
   return `<div class="bg-white rounded-xl shadow-sm p-4">
     <h3 class="font-bold mb-2">${title}</h3>
-    <div class="grid sm:grid-cols-2 gap-2">${items.map(card).join("")}</div></div>`;
+    <div class="grid sm:grid-cols-2 gap-2">${items.map(c=>card(c,isPM)).join("")}</div></div>`;
 }
 function render(d){
   statusMsg.classList.add("hidden");results.classList.remove("hidden");
@@ -190,7 +206,7 @@ function render(d){
   prevSlots=newSlots; pendingSwap=null;
   const safe=d.hard_violations.length===0;
   const banner=safe
-    ? `<div class="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-lg p-3 text-sm">✅ <b>0 conflicts.</b> Total ${money(d.total_price_inr)} ${d.within_budget?"— within budget":'<span class="text-rose-600">— over budget</span>'}</div>`
+    ? `<div class="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-lg p-3 text-sm">✅ <b>0 conflicts.</b> Total ${budgetText(d)}</div>`
     : `<div class="bg-rose-50 border border-rose-300 text-rose-800 rounded-lg p-3 text-sm">⛔ <b>${d.hard_violations.length} hard conflict(s) shipped</b> (safety layer OFF): ${d.hard_violations.map(v=>v.rule_id).join(", ")}</div>`;
 
   // avoided or violations panel
@@ -199,10 +215,12 @@ function render(d){
   if(list.length){
     panel=`<div class="bg-white rounded-xl shadow-sm p-4"><h3 class="font-bold mb-2">${safe?"🛡️ Conflicts avoided":"⛔ Conflicts (unresolved)"}</h3>
       <div class="space-y-2">`+list.map(v=>{
-        const tag = safe?`<span class="text-[11px] px-2 py-[2px] rounded-full bg-emerald-100 text-emerald-700">${v.action}</span>`:chip("HARD","bg-rose-100 text-rose-700");
+        const ACT={scheduled_apart:"scheduled apart",product_swapped:"product swapped",excluded_no_alternative:"no alternative"};
+        const tag = safe?`<span class="text-[11px] px-2 py-[2px] rounded-full bg-emerald-100 text-emerald-700">${ACT[v.action]||v.action}</span>`:chip("HARD","bg-rose-100 text-rose-700");
         return `<div class="border rounded-lg p-2 text-sm ${safe?"":"border-rose-300"}">
           <div class="flex justify-between"><b>${v.rule_id} · ${v.classes||v.class_a}</b>${tag}</div>
-          <div class="text-slate-600 text-xs mt-1">${v.mechanism}</div>
+          ${v.detail?`<div class="text-slate-800 text-xs mt-1 font-medium">${v.detail}</div>`:""}
+          <div class="text-slate-500 text-xs mt-1">${v.mechanism}</div>
           ${v.citation?`<div class="text-[11px] text-slate-400 mt-1">📖 ${v.citation}</div>`:""}
           ${v.products?`<div class="text-[11px] text-slate-500 mt-1">${v.products.join("  |  ")}</div>`:""}</div>`;
       }).join("")+`</div></div>`;
@@ -235,7 +253,7 @@ function render(d){
           <div class="text-[11px] mt-1 ${ok?"text-emerald-600":"text-rose-600 font-semibold"}">${ok?"✓ full conflict checking":"✗ conflict checking disabled — "+r.note}</div></div>`;
       }).join("")+`</div></div>`;
   }
-  results.innerHTML = banner + swapBanner + ladder + board("☀️ Morning (AM)",d.am) + board("🌙 Night (PM)",d.pm) + panel + cautions + dbg;
+  results.innerHTML = banner + swapBanner + ladder + board("☀️ Morning (AM)",d.am) + board("🌙 Night (PM)",d.pm,true) + panel + cautions + dbg;
 }
 paintToggle();
 </script>
