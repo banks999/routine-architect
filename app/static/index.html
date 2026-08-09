@@ -70,9 +70,9 @@
 const CONCERNS=["aging","texture","acne","dark_spots","dullness","redness","dryness","oiliness"];
 const EXCL=["fragrance","essential oils","pregnancy-safe only","alcohol"];
 const PRESETS=[
-  {label:"✨ Anti-aging + texture",skin:"combination",concerns:["aging","texture"],budget:12000,owned:[]},
-  {label:"🔴 Oily & acne-prone (forces AM/PM split)",skin:"oily",concerns:["acne","aging"],budget:9000,owned:[]},
-  {label:"🌟 Brightening & dullness",skin:"dry",concerns:["dark_spots","dullness"],budget:14000,owned:[]},
+  {label:"✨ Anti-aging + texture",skin:"combination",concerns:["aging","texture"],budget:15000,owned:[]},
+  {label:"🔴 Oily & acne-prone (forces AM/PM split)",skin:"oily",concerns:["acne","aging"],budget:14000,owned:[]},
+  {label:"🌟 Brightening & dullness",skin:"dry",concerns:["dark_spots","dullness"],budget:17000,owned:[]},
   {label:"💸 Tight ₹5,000 budget",skin:"oily",concerns:["acne","aging"],budget:5000,owned:[]},
   {label:"🧴 I already use retinol (build around it)",skin:"combination",concerns:["texture","acne"],budget:9000,owned:["The Ordinary Granactive Retinoid 2% Emulsion"]},
 ];
@@ -188,7 +188,7 @@ function board(title,items,isPM){
 }
 function render(d){
   statusMsg.classList.add("hidden");results.classList.remove("hidden");
-  backend.textContent=`store: ${d.backend} · ${d.cached?"cached":"live"} · expl: ${d.explanation_source}`;
+  backend.textContent=`store: ${d.backend} · ${d.cached?"cached":"live"} · expl: ${d.explanation_source==="gemini"?"llm (gemini)":d.explanation_source}`;
   lastData=d;
   // ---- swap diff: surface when removing one product re-bound OTHER slots ----
   const short=n=>n.split(" — ").pop();

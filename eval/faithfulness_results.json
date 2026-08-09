@@ -1,0 +1,938 @@
+{
+ "summary": {
+  "judge_model": "llama-3.3-70b-versatile",
+  "generator_model": "gemini-flash-lite-latest",
+  "n_products": 27,
+  "llm": {
+   "faithful": 24,
+   "judged": 27,
+   "rate": 0.889
+  },
+  "template": {
+   "faithful": 26,
+   "judged": 27,
+   "rate": 0.963
+  },
+  "llm_failure_modes": [
+   {
+    "name": "innisfree — Green Tea Hyaluronic Acid Hydrating Moisturizer",
+    "why": "Reviewers with your skin type note that this moisturizer absorbs quickly and serves as a game changer for keeping dehydrated skin hydrated.",
+    "unsupported": [
+     "hyaluronic acid",
+     "squalane",
+     "moisturizer"
+    ],
+    "reason": "Introduction of specific ingredients and product type not present in the evidence"
+   },
+   {
+    "name": "The INKEY List — 15% Vitamin C and EGF Brightening Serum",
+    "why": "Reviewers with your skin type appreciate that this vitamin c serum brightens and evens out skin tone to give a super glowy look.",
+    "unsupported": [
+     "vitamin c serum"
+    ],
+    "reason": "Introduction of specific ingredient 'vitamin c serum' not present in the evidence."
+   },
+   {
+    "name": "Kate Somerville — HydraKate Recharging Water Cream Moisturizer",
+    "why": "Reviewers with sensitive skin love this lightweight water cream for giving instant, plumping hydration that feels like a glass of water.",
+    "unsupported": [
+     "sensitive skin",
+     "instant, plumping hydration",
+     "feels like a glass of water"
+    ],
+    "reason": "Introduction of specific benefits and phrases not present in the evidence for the given skin type, which is combination, not sensitive."
+   }
+  ]
+ },
+ "rows": [
+  {
+   "pid": "P473726",
+   "name": "SEPHORA COLLECTION — Smoothing Cleanser",
+   "skin": "oily",
+   "evidence": {
+    "actives": [],
+    "themes": [
+     "cleansing brush"
+    ],
+    "skin_type": "oily",
+    "matched_skin_reviews": 19,
+    "snippets": [
+     "Honestly I usually buy expensive products, but I thought I’d try out some less costly options. I didn’t like the Sephora makeup removing balm I tried, but I love this cleanser. It definitely makes my ",
+     "I have only had the product two weeks but I like it very much. I love the price for the size of the product and it’s effective ness. I like that it cleanses but does not leave my skin feeling dry. I b"
+    ]
+   },
+   "llm": "Reviewers love that this cleanser effectively cleanses without leaving the skin feeling dry.",
+   "template": "Reviewers with oily skin most often mention “cleansing brush” (from 19 matched 4★+ reviews).",
+   "judge_llm": {
+    "verdict": "faithful",
+    "unsupported": [],
+    "reason": "The explanation restates a theme present in the snippets."
+   },
+   "judge_template": {
+    "verdict": "unfaithful",
+    "unsupported": [
+     "4★+ reviews"
+    ],
+    "reason": "Introduction of a specific review rating not present in the evidence"
+   }
+  },
+  {
+   "pid": "P411403",
+   "name": "IT Cosmetics — Confidence in a Cream Anti-Aging Hydrating Moisturizer",
+   "skin": "oily",
+   "evidence": {
+    "actives": [
+     "niacinamide",
+     "peptide"
+    ],
+    "themes": [
+     "a little goes a long way"
+    ],
+    "skin_type": "oily",
+    "matched_skin_reviews": 48,
+    "snippets": [
+     "this product works great for my skin during the winter months. my skin feels moisturized and soft each morning I wake up"
+    ]
+   },
+   "llm": "Reviewers note that a little goes a long way, keeping skin moisturized and soft each morning.",
+   "template": "Reviewers with oily skin most often mention “a little goes a long way” (from 48 matched 4★+ reviews). Active(s): niacinamide, peptide.",
+   "judge_llm": {
+    "verdict": "faithful",
+    "unsupported": [],
+    "reason": "The explanation restates the 'a little goes a long way' theme and paraphrases the snippet about skin feeling moisturized and soft."
+   },
+   "judge_template": {
+    "verdict": "faithful",
+    "unsupported": [],
+    "reason": "Explanation only restates evidence"
+   }
+  },
+  {
+   "pid": "P457522",
+   "name": "Dr. Jart+ — Every Sun Day Sun Fluid SPF 50+",
+   "skin": "oily",
+   "evidence": {
+    "actives": [],
+    "themes": [
+     "white cast",
+     "under makeup"
+    ],
+    "skin_type": "oily",
+    "matched_skin_reviews": 41,
+    "snippets": [
+     "Great for my acne prone skin. Wears nicely under makeup and no white cast!! I genuinely like using this product, and usually I find applying sunscreen to be a chore. Only thing is I wish it was fragra",
+     "This is so perfect under makeup! It’s a go to for me! Not greasy! Lightweight. I see myself using this all year round. I have combo-oily skin. If your skin type is like mine, you’ll love this sunscree",
+     "Perfect for me. One star removed because I don’t like the smell of lavender."
+    ]
+   },
+   "llm": "Reviewers with acne-prone and combo-oily skin appreciate that it wears nicely under makeup with no white cast and isn't greasy.",
+   "template": "Reviewers with oily skin most often mention “white cast” and “under makeup” (from 41 matched 4★+ reviews).",
+   "judge_llm": {
+    "verdict": "faithful",
+    "reason": "Explanation restates themes and is consistent with the provided evidence."
+   },
+   "judge_template": {
+    "verdict": "faithful",
+    "unsupported": [],
+    "reason": "The explanation accurately reflects the provided evidence."
+   }
+  },
+  {
+   "pid": "P500857",
+   "name": "Murad — Deep Relief Acne Treatment with Salicylic Acid",
+   "skin": "oily",
+   "evidence": {
+    "actives": [
+     "bha"
+    ],
+    "themes": [
+     "next morning",
+     "few days",
+     "under the skin"
+    ],
+    "skin_type": "oily",
+    "matched_skin_reviews": 68,
+    "snippets": [
+     "This is probably one of my favorites in my skin care routine! I’ve had it for about a week already and can already see results. Plus it’s not drying at all. My skin feels and looks great and I am in a"
+    ]
+   },
+   "llm": "Reviewers see results by the next morning and within a few days for treating concerns under the skin without being drying.",
+   "template": "Reviewers with oily skin most often mention “next morning”, “few days” and “under the skin” (from 68 matched 4★+ reviews). Active(s): bha.",
+   "judge_llm": {
+    "verdict": "faithful",
+    "unsupported": [],
+    "reason": "Explanation restates review themes without introducing unsupported claims."
+   },
+   "judge_template": {
+    "verdict": "faithful",
+    "unsupported": [],
+    "reason": "Explanation only restates evidence"
+   }
+  },
+  {
+   "pid": "P443842",
+   "name": "The INKEY List — Retinol Anti-Aging Serum",
+   "skin": "oily",
+   "evidence": {
+    "actives": [
+     "peptide",
+     "retinoid",
+     "vitamin_c_derivative"
+    ],
+    "themes": [
+     "every night"
+    ],
+    "skin_type": "oily",
+    "matched_skin_reviews": 66,
+    "snippets": [
+     "Lo amé!! estoy usandolo todas las noches y me ha ayudado a mejorar mi piel en todos los sentidos!",
+     "I’ve noticed improvement with my skin texture and bounce back/recovery time from my acne since I’ve started using this. It’s a huge staple in my skin care routine now.",
+     "I enjoy the product itself, the smell doesn’t bother me so much. But I hate the packaging. The packaging is horrible and makes me want to look for a new retinol. But I enjoy that actual retinol produc"
+    ]
+   },
+   "llm": "Reviewers enjoy using it every night to help improve their skin in all ways, noticing better texture and bounce back.",
+   "template": "Reviewers with oily skin most often mention “every night” (from 66 matched 4★+ reviews). Active(s): peptide, retinoid, vitamin c derivative.",
+   "judge_llm": {
+    "verdict": "faithful",
+    "unsupported": [],
+    "reason": "Explanation restates themes and snippets from the evidence."
+   },
+   "judge_template": {
+    "verdict": "faithful",
+    "unsupported": [],
+    "reason": "Explanation only restates evidence from themes, actives, skin type, and matched review count."
+   }
+  },
+  {
+   "pid": "P482742",
+   "name": "Shiseido — Urban Environment Fresh-Moisture Sunscreen Broad-Spectrum SPF 42",
+   "skin": "combination",
+   "evidence": {
+    "actives": [
+     "vitamin_c_derivative"
+    ],
+    "themes": [
+     "white cast",
+     "hyaluronic acid",
+     "under makeup"
+    ],
+    "skin_type": "combination",
+    "matched_skin_reviews": 307,
+    "snippets": [
+     "it lives up to its name with Fresh Moisture, its very moisturizing but not sticky at all. you actually feel very fresh and such a pleasure to apply it on. i love it and cant wait to wear it every day ",
+     "the consistency is really smooth so it spreads and blends really nicely. it does have a slight scent but it isn’t too bad. It dries really nicely with slight dewy finish.",
+     "My face loved this sunscreen!! I looked dewy, well moisturized without being greasy. There was no white cast to my face at all. Definitely brown woman friendly."
+    ]
+   },
+   "llm": "Reviewers appreciate that this fresh-moisture sunscreen spreads smoothly with a slight dewy finish and leaves no white cast.",
+   "template": "Reviewers with combination skin most often mention “white cast”, “hyaluronic acid” and “under makeup” (from 307 matched 4★+ reviews). Active(s): vitamin c derivative.",
+   "judge_llm": {
+    "verdict": "faithful",
+    "unsupported": [],
+    "reason": "The explanation restates themes and snippets from the evidence."
+   },
+   "judge_template": {
+    "verdict": "faithful",
+    "unsupported": [],
+    "reason": "Explanation only restates evidence from themes, actives, skin type, and review count."
+   }
+  },
+  {
+   "pid": "P474840",
+   "name": "Kiehl's Since 1851 — Micro-Dose Anti-Aging Retinol Serum with Ceramides and Peptide",
+   "skin": "combination",
+   "evidence": {
+    "actives": [
+     "niacinamide",
+     "peptide",
+     "retinoid"
+    ],
+    "themes": [
+     "few weeks",
+     "weeks now",
+     "a little goes a long way"
+    ],
+    "skin_type": "combination",
+    "matched_skin_reviews": 287,
+    "snippets": [
+     "I’ve tried a few different brands of Retinol, and this is perfect. Especially if you have sensitive skin, this is the retinol for you ! No break outs. I’m 32, Caucasian, combination skin. My skin is s",
+     "Loving it so far! It’s so gentle and my face has cleared up since being irritated by other retinol products even after the retinol purge should have ended. Highly recommend!",
+     "I love this stuff, been using it for a year now. I have seen some great results ever since I’ve been using it."
+    ]
+   },
+   "llm": "Reviewers with sensitive and combination skin find this gentle retinol serum perfect because a little goes a long way with no breakouts.",
+   "template": "Reviewers with combination skin most often mention “few weeks”, “weeks now” and “a little goes a long way” (from 287 matched 4★+ reviews). Active(s): niacinamide, peptide, retinoid.",
+   "judge_llm": {
+    "verdict": "faithful",
+    "unsupported": [],
+    "reason": "The explanation restates the themes and skin type from the evidence."
+   },
+   "judge_template": {
+    "verdict": "faithful",
+    "unsupported": [],
+    "reason": "Explanation only restates evidence from themes, actives, and review count."
+   }
+  },
+  {
+   "pid": "P427413",
+   "name": "The Ordinary — Lactic Acid 10% + HA 2% Exfoliating Serum",
+   "skin": "combination",
+   "evidence": {
+    "actives": [
+     "aha"
+    ],
+    "themes": [
+     "every night",
+     "acne scars"
+    ],
+    "skin_type": "combination",
+    "matched_skin_reviews": 287,
+    "snippets": [
+     "i love this so much it decreases texture, acne, and scarring and its pretty gentle for an exfoliant",
+     "After using a couple of uses I felt like I could visibly see my bumps going away on my face. Very happy to see it work. I would recommend to try it and see if it works for your skin!",
+     "This serum pretty much melts dead skin cells and sebum off your face to be simply rinsed off. What’s not to love? Be warned that the first use may feel itchy, but I haven’t experienced any strange sen"
+    ]
+   },
+   "llm": "Reviewers note that this exfoliating serum is great for visibly reducing bumps, texture, and acne scars.",
+   "template": "Reviewers with combination skin most often mention “every night” and “acne scars” (from 287 matched 4★+ reviews). Active(s): aha.",
+   "judge_llm": {
+    "verdict": "faithful",
+    "reason": "The explanation restates themes and snippets from the evidence."
+   },
+   "judge_template": {
+    "verdict": "faithful",
+    "unsupported": [],
+    "reason": "The explanation only restates information from the evidence."
+   }
+  },
+  {
+   "pid": "P475543",
+   "name": "Glow Recipe — Guava Vitamin C Dark Spot Treatment Serum",
+   "skin": "dry",
+   "evidence": {
+    "actives": [
+     "peptide",
+     "vitamin_c_derivative"
+    ],
+    "themes": [
+     "absorbs quickly",
+     "acne scars",
+     "few days"
+    ],
+    "skin_type": "dry",
+    "matched_skin_reviews": 112,
+    "snippets": [
+     "I love this product. It’s make my face soft shiny. I just love it.",
+     "My dark spots are vanishing like magic. I am using this from last 2 months. I had dark spots left from the acne on my cheeks and forehead. My skin looks very smooth now.",
+     "Definitely made my face super glowy almost instantly. I can’t speak to whether it’s reduced dark spots because I don’t really have any, but it definitely made me glowy and brightened up my complexion."
+    ]
+   },
+   "llm": "Reviewers with your skin type praise how quickly this serum absorbs to fade acne scars and leave skin feeling soft and shiny.",
+   "template": "Reviewers with dry skin most often mention “absorbs quickly”, “acne scars” and “few days” (from 112 matched 4★+ reviews). Active(s): peptide, vitamin c derivative.",
+   "judge_llm": {
+    "verdict": "faithful",
+    "reason": "Explanation restates evidence themes and skin type."
+   },
+   "judge_template": {
+    "verdict": "faithful",
+    "unsupported": [],
+    "reason": "Explanation only restates evidence from themes, actives, skin type, and review count."
+   }
+  },
+  {
+   "pid": "P500756",
+   "name": "First Aid Beauty — 10% Vitamin C Brightening Serum",
+   "skin": "dry",
+   "evidence": {
+    "actives": [
+     "vitamin_c_derivative"
+    ],
+    "themes": [
+     "looks brighter",
+     "a little goes a long way"
+    ],
+    "skin_type": "dry",
+    "matched_skin_reviews": 82,
+    "snippets": [
+     "I noticed a difference the second I put this on my face every morning. So brightening!",
+     "Amazing for dry skin. The Glow is real. I believe is a good vitamin C for beginners.",
+     "I’ve tried a bunch of different Vitamin C serums and found that this is one of my favorites! It absorbs really well and is great under makeup! I’ve been using it for over a month now and have definite"
+    ]
+   },
+   "llm": "Reviewers with your skin type mention that a little goes a long way with this vitamin C serum, instantly making your complexion look brighter and giving you a real glow.",
+   "template": "Reviewers with dry skin most often mention “looks brighter” and “a little goes a long way” (from 82 matched 4★+ reviews). Active(s): vitamin c derivative.",
+   "judge_llm": {
+    "verdict": "faithful",
+    "unsupported": [],
+    "reason": "Explanation restates themes and skin type from evidence."
+   },
+   "judge_template": {
+    "verdict": "faithful",
+    "unsupported": [],
+    "reason": "Explanation only restates evidence from themes, actives, skin type, and review count."
+   }
+  },
+  {
+   "pid": "P504429",
+   "name": "SEPHORA COLLECTION — Hydrating Serum",
+   "skin": "dry",
+   "evidence": {
+    "actives": [],
+    "themes": [
+     "hyaluronic acid",
+     "price point"
+    ],
+    "skin_type": "dry",
+    "matched_skin_reviews": 85,
+    "snippets": [
+     "Love how hydrating this serum is! It’s very easy to apply and is not heavily scented is which perfect. I do my normal skin care and after the most riser I just apply the serum to lock everything in. I",
+     "I absolutely love this hydrating serum. Such a great price point and does exactly what is says it will. I use morning and night prior to my moisturizer and have noticed it helps keep my skin plump and",
+     "I have been looking for a serum that would moisturize my skin, but that wouldn’t break the bank. When I saw this one, I wanted to try it out and honestly have been very impressed so far. I apply it be"
+    ]
+   },
+   "llm": "At a great price point, reviewers loved how this hydrating serum with hyaluronic acid keeps skin plump and moisturized.",
+   "template": "Reviewers with dry skin most often mention “hyaluronic acid” and “price point” (from 85 matched 4★+ reviews).",
+   "judge_llm": {
+    "verdict": "faithful",
+    "unsupported": [],
+    "reason": "The explanation restates themes and snippets from the evidence."
+   },
+   "judge_template": {
+    "verdict": "faithful",
+    "unsupported": [],
+    "reason": "The explanation only restates information from the evidence."
+   }
+  },
+  {
+   "pid": "P502741",
+   "name": "The INKEY List — SuperSolutions 10% Azelaic Serum Redness Relief Solution",
+   "skin": "dry",
+   "evidence": {
+    "actives": [
+     "azelaic_acid"
+    ],
+    "themes": [
+     "few weeks",
+     "price point"
+    ],
+    "skin_type": "dry",
+    "matched_skin_reviews": 6,
+    "snippets": [
+     "After a two months of using this it has taken away almost all of my post inflammatory erythema!!! Love it",
+     "Great for redness but it really dried out my skin so I applied moisturizer after using it."
+    ]
+   },
+   "llm": "Reviewers highlighted this azelaic acid serum's great price point and how it helps with redness after a few weeks of use.",
+   "template": "Only 6 reviewers with dry skin, so across all reviewers: most mention “few weeks” and “price point”. Active(s): azelaic acid.",
+   "judge_llm": {
+    "verdict": "faithful",
+    "unsupported": [],
+    "reason": "The explanation only restates information found in the evidence."
+   },
+   "judge_template": {
+    "verdict": "faithful",
+    "unsupported": [],
+    "reason": "Explanation only restates evidence without introducing new information."
+   }
+  },
+  {
+   "pid": "P446942",
+   "name": "The INKEY List — Niacinamide Oil Control Serum",
+   "skin": "oily",
+   "evidence": {
+    "actives": [
+     "niacinamide"
+    ],
+    "themes": [
+     "much better",
+     "feel like",
+     "a little goes a long way"
+    ],
+    "skin_type": "oily",
+    "matched_skin_reviews": 86,
+    "snippets": [
+     "Ever since I began using this my makeup has been lasting way longer and almost no shine. Of course I did change up my skin care as well but adding this was the last final touch. Will be repurchasing!",
+     "I love this! I was a little skeptical because the ordinary niacinamide didn’t work for me but this really improved the texture of my skin and helped my t zone!",
+     "Love love love! I use this in the morning to control oiliness and reduce redness and it works amazingly well, especially for the price point!"
+    ]
+   },
+   "llm": "Reviewers with your skin type mention that this serum works amazingly well to control oiliness and help make makeup last longer.",
+   "template": "Reviewers with oily skin most often mention “much better”, “feel like” and “a little goes a long way” (from 86 matched 4★+ reviews). Active(s): niacinamide.",
+   "judge_llm": {
+    "verdict": "faithful",
+    "reason": "The explanation restates themes and snippets from the evidence."
+   },
+   "judge_template": {
+    "verdict": "faithful",
+    "unsupported": [],
+    "reason": "Explanation only restates evidence from themes, actives, and review count."
+   }
+  },
+  {
+   "pid": "P442871",
+   "name": "The INKEY List — Beta Hydroxy Acid (BHA) Blemish + Blackhead Serum",
+   "skin": "oily",
+   "evidence": {
+    "actives": [
+     "bha"
+    ],
+    "themes": [
+     "spot treatment",
+     "clogged pores"
+    ],
+    "skin_type": "oily",
+    "matched_skin_reviews": 71,
+    "snippets": [
+     "Love this product, will keep using in my routine. Would definitely recommend.",
+     "This has really helped me. I had really noticeable black heads and I was always picking at them and made my nose worse. Now I have been using this for about 2 months and have seen improvement a lot.",
+     "This is a favorite for sure. Inexpensive, easy to use, and doesn’t leave my skin feeling overly exfoliated or overly sensitized. Love this stuff!"
+    ]
+   },
+   "llm": "Reviewers with your skin type find this serum easy to use for targeting blackheads without leaving the skin feeling overly exfoliated or sensitized.",
+   "template": "Reviewers with oily skin most often mention “spot treatment” and “clogged pores” (from 71 matched 4★+ reviews). Active(s): bha.",
+   "judge_llm": {
+    "verdict": "faithful",
+    "reason": "The explanation restates themes and snippets from the evidence."
+   },
+   "judge_template": {
+    "verdict": "faithful",
+    "unsupported": [],
+    "reason": "The explanation only restates information from the evidence."
+   }
+  },
+  {
+   "pid": "P503891",
+   "name": "innisfree — Green Tea Hyaluronic Acid Hydrating Moisturizer",
+   "skin": "normal",
+   "evidence": {
+    "actives": [
+     "aha"
+    ],
+    "themes": [],
+    "skin_type": "normal",
+    "matched_skin_reviews": 55,
+    "snippets": [
+     "I love innisfree and this product definitely exceeds. I have dehydrated skin so this product that contains both hyaluronic acid and squalane is a game changer for my face. It absorbs quickly while mai"
+    ]
+   },
+   "llm": "Reviewers with your skin type note that this moisturizer absorbs quickly and serves as a game changer for keeping dehydrated skin hydrated.",
+   "template": "Active(s): aha.",
+   "judge_llm": {
+    "verdict": "unfaithful",
+    "unsupported": [
+     "hyaluronic acid",
+     "squalane",
+     "moisturizer"
+    ],
+    "reason": "Introduction of specific ingredients and product type not present in the evidence"
+   },
+   "judge_template": {
+    "verdict": "faithful",
+    "unsupported": [],
+    "reason": "The explanation only mentions the active ingredient 'aha' which is present in the evidence."
+   }
+  },
+  {
+   "pid": "P456392",
+   "name": "innisfree — Daily UV Defense Invisible Broad Spectrum SPF 36 Sunscreen",
+   "skin": "normal",
+   "evidence": {
+    "actives": [],
+    "themes": [
+     "white cast",
+     "under makeup",
+     "acne prone"
+    ],
+    "skin_type": "normal",
+    "matched_skin_reviews": 68,
+    "snippets": [
+     "LOVE LOVE LOVE this sunscreen. doesn’t leave a white cast, and doesn’t leave an oily film. This is my forever sunscreen!",
+     "Doesn’t pill or leave a white cast. Love the scent!",
+     "this is so nice and dewy but not oily, good sun protection and so affordable"
+    ]
+   },
+   "llm": "Reviewers with your skin type rave that this sunscreen doesn’t leave a white cast or an oily film, sitting nicely under makeup.",
+   "template": "Reviewers with normal skin most often mention “white cast”, “under makeup” and “acne prone” (from 68 matched 4★+ reviews).",
+   "judge_llm": {
+    "verdict": "faithful",
+    "unsupported": [],
+    "reason": "Explanation restates themes and skin type from evidence."
+   },
+   "judge_template": {
+    "verdict": "faithful",
+    "unsupported": [],
+    "reason": "Explanation restates evidence themes and skin type"
+   }
+  },
+  {
+   "pid": "P440949",
+   "name": "Alpha-H — Liquid Gold Exfoliating Treatment with Glycolic acid",
+   "skin": "normal",
+   "evidence": {
+    "actives": [
+     "aha"
+    ],
+    "themes": [
+     "testing purposes",
+     "other night"
+    ],
+    "skin_type": "normal",
+    "matched_skin_reviews": 72,
+    "snippets": [
+     "I think I got this from a beauty box but it’s the only thing that works on my ingrown hairs. Cleared them up in a day after the popular topicals roller didn’t work at all",
+     "This is a really great chemical exfoliator, it made my skin a bit sensitive but it seems to be extremely effective and affordable for the quality. Packaging is simple. I would definitely purchase in t",
+     "I love this product! I really do notice a difference when I wake up. My skin is softer and I do see less lines under my eyes and forehead(my problem areas). I would def recommend this!"
+    ]
+   },
+   "llm": "Reviewers with your skin type find this chemical exfoliator effective for making skin softer and noticing a difference by morning.",
+   "template": "Reviewers with normal skin most often mention “testing purposes” and “other night” (from 72 matched 4★+ reviews). Active(s): aha.",
+   "judge_llm": {
+    "verdict": "faithful",
+    "unsupported": [],
+    "reason": "Explanation restates evidence from snippets and matches the user's skin type."
+   },
+   "judge_template": {
+    "verdict": "faithful",
+    "unsupported": [],
+    "reason": "Explanation only restates information from the evidence."
+   }
+  },
+  {
+   "pid": "P455368",
+   "name": "The INKEY List — 15% Vitamin C and EGF Brightening Serum",
+   "skin": "normal",
+   "evidence": {
+    "actives": [
+     "peptide",
+     "vitamin_c_derivative"
+    ],
+    "themes": [
+     "price point",
+     "dark spots"
+    ],
+    "skin_type": "normal",
+    "matched_skin_reviews": 67,
+    "snippets": [
+     "This serum gives my skin excellent results without irritation. Brightens, evens out skin tone, diminishes dark spots, and minimizes pores.",
+     "Make my skin super glowy and hydrated. This also smothes the face before makeup. So it is a great primer as well!",
+     "It is a good product. It absorbs very fast. Comfortable to use."
+    ]
+   },
+   "llm": "Reviewers with your skin type appreciate that this vitamin c serum brightens and evens out skin tone to give a super glowy look.",
+   "template": "Reviewers with normal skin most often mention “price point” and “dark spots” (from 67 matched 4★+ reviews). Active(s): peptide, vitamin c derivative.",
+   "judge_llm": {
+    "verdict": "unfaithful",
+    "unsupported": [
+     "vitamin c serum"
+    ],
+    "reason": "Introduction of specific ingredient 'vitamin c serum' not present in the evidence."
+   },
+   "judge_template": {
+    "verdict": "faithful",
+    "unsupported": [],
+    "reason": "Explanation only restates information from the evidence."
+   }
+  },
+  {
+   "pid": "P476428",
+   "name": "Hyper Skin — Brightening Dark Spot Vitamin C Serum",
+   "skin": "combination",
+   "evidence": {
+    "actives": [
+     "bha",
+     "vitamin_c_derivative"
+    ],
+    "themes": [
+     "acne scars",
+     "two weeks",
+     "really enjoyed"
+    ],
+    "skin_type": "combination",
+    "matched_skin_reviews": 87,
+    "snippets": [
+     "My skin has been faster at fighting dark spots after a breakout. It used to takes months to clear up before. Now it takes a matter of two weeks too a month! Love this product.",
+     "Works, fades dark spots. I used the entire bottle. I will repurchase.",
+     "First product to lighten my hyperpigmentation in a long time! Absolutely love ❤️"
+    ]
+   },
+   "llm": "If you're dealing with acne scars, reviewers really enjoyed how quickly this vitamin C serum helps fade dark spots in just a couple of weeks.",
+   "template": "Reviewers with combination skin most often mention “acne scars”, “two weeks” and “really enjoyed” (from 87 matched 4★+ reviews). Active(s): bha, vitamin c derivative.",
+   "judge_llm": {
+    "verdict": "faithful",
+    "unsupported": [],
+    "reason": "The explanation restates the themes 'acne scars' and 'two weeks', and the active 'vitamin_c_derivative'."
+   },
+   "judge_template": {
+    "verdict": "faithful",
+    "unsupported": [],
+    "reason": "Explanation only restates evidence without introducing new claims."
+   }
+  },
+  {
+   "pid": "P502197",
+   "name": "Kate Somerville — HydraKate Recharging Water Cream Moisturizer",
+   "skin": "combination",
+   "evidence": {
+    "actives": [
+     "peptide"
+    ],
+    "themes": [
+     "under makeup",
+     "acne prone"
+    ],
+    "skin_type": "combination",
+    "matched_skin_reviews": 42,
+    "snippets": [
+     "I love this packaging and how sanitary it keeps the product! My Sensitive Skin LOVES the plumping and INSTANT hydration it gives! My face feels like it drank a glass of water immediately! This cream i",
+     "I deal with very sensitive skin and dry skin during winter months. Sometimes my go to products trigger some acne and irritation. This water cream is the best and softens skin after time. Been using it",
+     "This is the best hydrating cream I’ve used in quite a while! The California heat has left me needing a level of hydration that only this provided. I love how lightweight it is on my skin and how quick"
+    ]
+   },
+   "llm": "Reviewers with sensitive skin love this lightweight water cream for giving instant, plumping hydration that feels like a glass of water.",
+   "template": "Reviewers with combination skin most often mention “under makeup” and “acne prone” (from 42 matched 4★+ reviews). Active(s): peptide.",
+   "judge_llm": {
+    "verdict": "unfaithful",
+    "unsupported": [
+     "sensitive skin",
+     "instant, plumping hydration",
+     "feels like a glass of water"
+    ],
+    "reason": "Introduction of specific benefits and phrases not present in the evidence for the given skin type, which is combination, not sensitive."
+   },
+   "judge_template": {
+    "verdict": "faithful",
+    "unsupported": [],
+    "reason": "Explanation only restates information from the evidence."
+   }
+  },
+  {
+   "pid": "P422430",
+   "name": "Lancôme — Hydra Zen Gel-Cream Oil-Free Moisturizer with Salicylic Acid",
+   "skin": "oily",
+   "evidence": {
+    "actives": [
+     "bha"
+    ],
+    "themes": [
+     "testing purposes",
+     "a little goes a long way"
+    ],
+    "skin_type": "oily",
+    "matched_skin_reviews": 76,
+    "snippets": [
+     "Amazing for sensitive skin and soft.My skin is very Oily and this gel make a perfect balance and not cause acne and control them"
+    ]
+   },
+   "llm": "Reviewers with your skin type note that this gel makes a perfect balance, controls acne, and leaves skin soft.",
+   "template": "Reviewers with oily skin most often mention “testing purposes” and “a little goes a long way” (from 76 matched 4★+ reviews). Active(s): bha.",
+   "judge_llm": {
+    "verdict": "faithful",
+    "unsupported": [],
+    "reason": "Explanation restates evidence snippets"
+   },
+   "judge_template": {
+    "verdict": "faithful",
+    "unsupported": [],
+    "reason": "Explanation only restates evidence"
+   }
+  },
+  {
+   "pid": "P442594",
+   "name": "SEPHORA COLLECTION — Ultra Glow Serum: Glow + Strengthen Vitamin C Serum",
+   "skin": "normal",
+   "evidence": {
+    "actives": [
+     "vitamin_c_derivative"
+    ],
+    "themes": [
+     "full size",
+     "dark spots"
+    ],
+    "skin_type": "normal",
+    "matched_skin_reviews": 60,
+    "snippets": [
+     "Great product to use on daily basis. Would definitely recommend.",
+     "This Ultra Glow Serum: Glow + Strengthen Vitamin C Serum was easy to rub on my face. It was oily and it didn’t make my skin feel no way…as in a bad way lol",
+     "Great serum! Brings out a natural glow. I like using it as my skincare routine or before wearing sunscreen."
+    ]
+   },
+   "llm": "If you want to enhance your daily routine, reviewers with your skin type find this serum easy to apply and note that it brings out a natural glow.",
+   "template": "Reviewers with normal skin most often mention “full size” and “dark spots” (from 60 matched 4★+ reviews). Active(s): vitamin c derivative.",
+   "judge_llm": {
+    "verdict": "faithful",
+    "unsupported": [],
+    "reason": "Explanation restates evidence themes and skin type."
+   },
+   "judge_template": {
+    "verdict": "faithful",
+    "unsupported": [],
+    "reason": "Explanation only restates information from the evidence."
+   }
+  },
+  {
+   "pid": "P501029",
+   "name": "Kiehl's Since 1851 — Retinol Fast-Release Wrinkle Reducing Night Serum",
+   "skin": "dry",
+   "evidence": {
+    "actives": [
+     "retinoid"
+    ],
+    "themes": [
+     "feel like",
+     "few weeks",
+     "a little goes a long way"
+    ],
+    "skin_type": "dry",
+    "matched_skin_reviews": 80,
+    "snippets": [
+     "I love this product. It makes my skin feel so soft and smooth.",
+     "After using this product for the last month or so, I am moving the results I’ve gotten. I have noticed my wrinkles softening up so they’re not so defined. My face looks brighter and more youthful. Gre"
+    ]
+   },
+   "llm": "Reviewers with your skin type find that a little goes a long way with this retinoid serum, leaving skin feeling soft, smooth, and noticeably brighter after a few weeks.",
+   "template": "Reviewers with dry skin most often mention “feel like”, “few weeks” and “a little goes a long way” (from 80 matched 4★+ reviews). Active(s): retinoid.",
+   "judge_llm": {
+    "verdict": "faithful",
+    "unsupported": [],
+    "reason": "Explanation restates evidence themes and actives without introducing unsupported claims."
+   },
+   "judge_template": {
+    "verdict": "faithful",
+    "unsupported": [],
+    "reason": "Explanation only restates evidence without introducing new claims."
+   }
+  },
+  {
+   "pid": "P502479",
+   "name": "Youth To The People — Kombucha + 10% AHA Liquid Exfoliant with Lactic Acid and Glycolic Acid",
+   "skin": "combination",
+   "evidence": {
+    "actives": [
+     "aha"
+    ],
+    "themes": [
+     "next morning",
+     "less sticky",
+     "gentle enough"
+    ],
+    "skin_type": "combination",
+    "matched_skin_reviews": 46,
+    "snippets": [
+     "This has become part of my regular routine. My skin is smoother and more radiant, and this also helps me keep my skin balanced during the oily skin/breakout days of my cycle.",
+     "I used to have a lot of problems with patchy, combination skin but now it’s completely even and I don’t have any dry or oily spots. I hardly break out anymore either :)",
+     "This exfoliant has really helped clear some stubborn dark marks on my face and improve my skin texture!"
+    ]
+   },
+   "llm": "Reviewers found this AHA liquid exfoliant gentle enough to help improve skin texture, clear stubborn dark marks, and keep skin balanced during breakout-prone days.",
+   "template": "Reviewers with combination skin most often mention “next morning”, “less sticky” and “gentle enough” (from 46 matched 4★+ reviews). Active(s): aha.",
+   "judge_llm": {
+    "verdict": "faithful",
+    "reason": "Explanation restates evidence themes and snippets without introducing unsupported claims."
+   },
+   "judge_template": {
+    "verdict": "faithful",
+    "unsupported": [],
+    "reason": "The explanation only restates information from the evidence."
+   }
+  },
+  {
+   "pid": "P504125",
+   "name": "Glow Recipe — Strawberry BHA Pore-Smooth Blur Drops",
+   "skin": "combination",
+   "evidence": {
+    "actives": [
+     "bha"
+    ],
+    "themes": [
+     "under makeup",
+     "makeup primer",
+     "feel like"
+    ],
+    "skin_type": "combination",
+    "matched_skin_reviews": 299,
+    "snippets": [
+     "Love using after my moisturizer, it feels nice and over time it reduces the look of pores. i love it",
+     "This is the perfect primer for a matte and smooth base. Love using it before I begin my base. Great sister product to the Niacinamide Dew Drops of the same company, which I used previously as a primer",
+     "I would give this a 10 stars if I could! If you want pore minimizing and without any silicones get this! My makeup and skin have never looked better!! 100000% recommend"
+    ]
+   },
+   "llm": "Reviewers highlighted that this works wonderfully as a makeup primer for a smooth base while helping to minimize the look of pores.",
+   "template": "Reviewers with combination skin most often mention “under makeup”, “makeup primer” and “feel like” (from 299 matched 4★+ reviews). Active(s): bha.",
+   "judge_llm": {
+    "verdict": "faithful",
+    "unsupported": [],
+    "reason": "Explanation restates review themes and snippets."
+   },
+   "judge_template": {
+    "verdict": "faithful",
+    "unsupported": [],
+    "reason": "Explanation only restates evidence from themes, actives, skin type, and review count."
+   }
+  },
+  {
+   "pid": "P483137",
+   "name": "SEPHORA COLLECTION — Targeted Dark Spots Serum with Enzymes",
+   "skin": "dry",
+   "evidence": {
+    "actives": [
+     "niacinamide"
+    ],
+    "themes": [
+     "vegan and clean",
+     "acne scars",
+     "quality doesn"
+    ],
+    "skin_type": "dry",
+    "matched_skin_reviews": 46,
+    "snippets": [
+     "I have melasma due to hormones. Pre-menopause. Tried this stuff EVERY day in the am/pm. With in 3 days I saw a difference. I’ve used this stuff for over a month and half. Spots are definitely less vis",
+     "I’ve been using this serum for 2 weeks now and my skin feels brighter, not sure about lightening if dark spots yet. It sinks into skin right away and sits well under makeup so I can apply it in the mo",
+     "I see a slight lightening of my dark spots. Nothing I have tried has made a change,  except this."
+    ]
+   },
+   "llm": "Reviewers note that this serum sinks right in and makes their skin feel brighter while helping dark spots become less visible.",
+   "template": "Reviewers with dry skin most often mention “vegan and clean”, “acne scars” and “quality doesn” (from 46 matched 4★+ reviews). Active(s): niacinamide.",
+   "judge_llm": {
+    "verdict": "faithful",
+    "unsupported": [],
+    "reason": "The explanation restates themes and snippets from the evidence."
+   },
+   "judge_template": {
+    "verdict": "faithful",
+    "unsupported": [],
+    "reason": "Explanation only restates evidence from themes, actives, skin type, and review count."
+   }
+  },
+  {
+   "pid": "P427411",
+   "name": "The Ordinary — Azelaic Acid 10% Suspension Brightening Cream",
+   "skin": "oily",
+   "evidence": {
+    "actives": [
+     "azelaic_acid"
+    ],
+    "themes": [
+     "dark spots"
+    ],
+    "skin_type": "oily",
+    "matched_skin_reviews": 85,
+    "snippets": [
+     "I have gone through so many of these. It just works at keeping redness away and reducing cheek texture. I have tried a more serum type formula and this one is just better. As a bonus it acts like a ma",
+     "I recommend this !! I use it on my chin , nose , forehead especially it helps with the texture on my skin it helps so much I don’t even use a lot I only use a pea size",
+     "I have really bad acne and the scaring that it has left me a bit insecure. After using this product for a couple of months my scars have become less noticeable and helped it has helped with my acne."
+    ]
+   },
+   "llm": "Reviewers with your skin type share that this brightening cream helps reduce dark spots and acne scarring.",
+   "template": "Reviewers with oily skin most often mention “dark spots” (from 85 matched 4★+ reviews). Active(s): azelaic acid.",
+   "judge_llm": {
+    "verdict": "faithful",
+    "reason": "The explanation restates themes and is applicable to the given skin type."
+   },
+   "judge_template": {
+    "verdict": "faithful",
+    "unsupported": [],
+    "reason": "Explanation only restates evidence from themes, actives, skin type, and matched review count."
+   }
+  }
+ ]
+}

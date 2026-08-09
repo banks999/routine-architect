@@ -121,9 +121,12 @@ _WEAK = {"skin looks", "skin feeling", "skin care", "skincare routine", "really 
          "skin tone", "smells like", "every other", "prone skin", "would recommend", "highly recommend",
          "skin type", "morning and", "night and", "well under", "the day"}
 # ALL skin-type words -> dropping these kills both the tautology ("oily" theme for an oily
-# user) AND the cross-cohort leak ("dry" theme for an oily user), for everyone.
+# user) AND the cross-cohort leak ("dry" theme for an oily user), for everyone. "sensitive"
+# included: it's a skin descriptor we don't model as a profile, so a mined "sensitive skin"
+# theme has no user to attribute to — and the LLM was converting it into "YOU have sensitive
+# skin" for every user (a faithfulness failure surfaced by §6.5).
 _SKIN_WORDS = {"oily", "oil", "greasy", "oiliness", "shiny", "dry", "dryness", "flaky", "flaking",
-               "combination", "combo", "normal"}
+               "combination", "combo", "normal", "sensitive", "sensitivity", "sensitized"}
 _CONCERN_ECHO = {
     "acne": {"acne", "breakout", "breakouts", "blemish", "blemishes", "pimple", "pimples"},
     "aging": {"aging", "ageing", "wrinkle", "wrinkles", "fine line", "fine lines", "anti aging"},
@@ -213,7 +216,7 @@ async def _gemini_explain(context: list) -> dict | None:
                   "the provided review themes, matched-skin snippets and actives. Reference what reviewers with "
                   "the user's skin type actually said. Do NOT invent ingredients or make safety/medical claims. "
                   "Return ONLY JSON {product_id: sentence}.\n" + json.dumps(context)[:7000])
-        r = genai.GenerativeModel("gemini-1.5-flash").generate_content(
+        r = genai.GenerativeModel("gemini-flash-lite-latest").generate_content(
             prompt, request_options={"timeout": 7})
         txt = r.text.strip().removeprefix("```json").removeprefix("```").removesuffix("```").strip()
         return json.loads(txt)
