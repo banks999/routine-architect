@@ -1,0 +1,5 @@
+# Eval/figure-regeneration only — NOT needed to run the app.
+# Kept out of requirements.txt (which the Dockerfile installs wholesale) so a
+# plotting library never ships in the runtime image. Install with:
+#   pip install -r requirements.txt -r requirements-dev.txt
+matplotlib==3.10.6
