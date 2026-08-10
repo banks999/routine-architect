@@ -1,125 +1,144 @@
 {
-  "top15": {
-    "naive": {
-      "safety_rate": 1.0,
-      "coverage": 0.83,
-      "redundancy": 0.12,
-      "budget_adherence": 0.0,
-      "placement_compliance": 1.0,
-      "spf_compliance": 1.0,
-      "relevance": 3.6534747460484507
-    },
-    "greedy": {
-      "safety_rate": 0.955,
-      "coverage": 0.855,
-      "redundancy": 0.07,
-      "budget_adherence": 0.95,
-      "placement_compliance": 0.965,
-      "spf_compliance": 1.0,
-      "relevance": 1.5394714175164699
-    },
-    "solver": {
-      "safety_rate": 1.0,
-      "coverage": 0.92,
-      "redundancy": 0.065,
-      "budget_adherence": 1.0,
-      "placement_compliance": 1.0,
-      "spf_compliance": 1.0,
-      "relevance": 2.383519908147864
-    }
+ "top15": {
+  "naive": {
+   "safety_rate": 1.0,
+   "coverage": 0.83,
+   "redundancy": 0.12,
+   "budget_adherence": 0.0,
+   "placement_compliance": 1.0,
+   "spf_compliance": 1.0,
+   "relevance": 3.6534747460484507
   },
-  "any_position": {
-    "naive": {
-      "safety_rate": 0.79,
-      "coverage": 1.0,
-      "redundancy": 0.3,
-      "budget_adherence": 0.0,
-      "placement_compliance": 0.615,
-      "spf_compliance": 1.0,
-      "relevance": 3.6534747460484507
-    },
-    "greedy": {
-      "safety_rate": 0.805,
-      "coverage": 1.0,
-      "redundancy": 0.135,
-      "budget_adherence": 0.95,
-      "placement_compliance": 0.615,
-      "spf_compliance": 1.0,
-      "relevance": 1.5394714175164699
-    },
-    "solver": {
-      "safety_rate": 1.0,
-      "coverage": 0.975,
-      "redundancy": 0.085,
-      "budget_adherence": 1.0,
-      "placement_compliance": 1.0,
-      "spf_compliance": 1.0,
-      "relevance": 2.4599922821857034
-    }
+  "greedy": {
+   "safety_rate": 0.955,
+   "coverage": 0.855,
+   "redundancy": 0.07,
+   "budget_adherence": 0.95,
+   "placement_compliance": 0.965,
+   "spf_compliance": 1.0,
+   "relevance": 1.5394714175164699
   },
-  "sanity_off": {
-    "rel_on": 2.4534629050642254,
-    "rel_off": 2.4526404585689305,
-    "cov_on": 0.975,
-    "cov_off": 0.975,
-    "conf_off": 9
-  },
-  "beyond_accuracy": {
-    "cleanser": {
-      "coverage": 0.06666666666666667,
-      "diversity": 0.23049914836883545,
-      "novelty": 6.971325681002423,
-      "gini": 0.455
-    },
-    "moisturizer": {
-      "coverage": 0.14814814814814814,
-      "diversity": 0.2445676475763321,
-      "novelty": 3.7695736774955275,
-      "gini": 0.6275
-    },
-    "spf": {
-      "coverage": 0.1,
-      "diversity": 0.15229640901088715,
-      "novelty": 4.979952671124999,
-      "gini": 0.23666666666666666
-    },
-    "treatment": {
-      "coverage": 0.14367816091954022,
-      "diversity": 0.3818266689777374,
-      "novelty": 5.474483394153544,
-      "gini": 0.48562162162162165
-    }
-  },
-  "latency": {
-    "retrieval (1 slot)": {
-      "p50": 24.88820001599379,
-      "p95": 43.72535999864339
-    },
-    "ranking+build (5 slots)": {
-      "p50": 3.9089000201784074,
-      "p95": 5.159965000348163
-    },
-    "basket solve": {
-      "p50": 22.482500004116446,
-      "p95": 25.544545004959218
-    }
-  },
-  "false_match": {
-    "old": {
-      "tiers": {
-        "tier1": 30,
-        "tier2": 0,
-        "tier4": 0
-      },
-      "false_match_rate": 1.0
-    },
-    "new": {
-      "tiers": {
-        "tier1": 0,
-        "tier2": 3,
-        "tier4": 27
-      },
-      "false_match_rate": 0.1
-    }
+  "solver": {
+   "safety_rate": 1.0,
+   "coverage": 0.92,
+   "redundancy": 0.065,
+   "budget_adherence": 1.0,
+   "placement_compliance": 1.0,
+   "spf_compliance": 1.0,
+   "relevance": 2.383519908147864
   }
+ },
+ "any_position": {
+  "naive": {
+   "safety_rate": 0.79,
+   "coverage": 1.0,
+   "redundancy": 0.3,
+   "budget_adherence": 0.0,
+   "placement_compliance": 0.615,
+   "spf_compliance": 1.0,
+   "relevance": 3.6534747460484507
+  },
+  "greedy": {
+   "safety_rate": 0.805,
+   "coverage": 1.0,
+   "redundancy": 0.135,
+   "budget_adherence": 0.95,
+   "placement_compliance": 0.615,
+   "spf_compliance": 1.0,
+   "relevance": 1.5394714175164699
+  },
+  "solver": {
+   "safety_rate": 1.0,
+   "coverage": 0.975,
+   "redundancy": 0.085,
+   "budget_adherence": 1.0,
+   "placement_compliance": 1.0,
+   "spf_compliance": 1.0,
+   "relevance": 2.4599922821857034
+  }
+ },
+ "sanity_off": {
+  "rel_on": 2.4534629050642254,
+  "rel_off": 2.4526404585689305,
+  "cov_on": 0.975,
+  "cov_off": 0.975,
+  "conf_off": 9
+ },
+ "beyond_accuracy": {
+  "cleanser": {
+   "coverage": 0.06666666666666667,
+   "diversity": 0.23049914836883545,
+   "novelty": 6.971325681002423,
+   "gini": 0.455
+  },
+  "moisturizer": {
+   "coverage": 0.14814814814814814,
+   "diversity": 0.2445676475763321,
+   "novelty": 3.7695736774955275,
+   "gini": 0.6275
+  },
+  "spf": {
+   "coverage": 0.1,
+   "diversity": 0.15229640901088715,
+   "novelty": 4.979952671124999,
+   "gini": 0.23666666666666666
+  },
+  "treatment": {
+   "coverage": 0.14367816091954022,
+   "diversity": 0.3818266689777374,
+   "novelty": 5.474483394153544,
+   "gini": 0.48562162162162165
+  }
+ },
+ "latency": {
+  "retrieval (1 slot)": {
+   "p50": 24.88820001599379,
+   "p95": 43.72535999864339
+  },
+  "ranking+build (5 slots)": {
+   "p50": 3.9089000201784074,
+   "p95": 5.159965000348163
+  },
+  "basket solve": {
+   "p50": 22.482500004116446,
+   "p95": 25.544545004959218
+  }
+ },
+ "false_match": {
+  "old": {
+   "tiers": {
+    "tier1": 30,
+    "tier2": 0,
+    "tier4": 0
+   },
+   "false_match_rate": 1.0
+  },
+  "new": {
+   "tiers": {
+    "tier1": 0,
+    "tier2": 3,
+    "tier4": 27
+   },
+   "false_match_rate": 0.1
+  }
+ },
+ "standard_cohort": {
+  "n_neg": 100,
+  "weights": "deployed [sem .3/cf .5/rating .1/skin .1]",
+  "note": "leave-one-out, temporal split, CF stale at test time (see rank_results.test_stale for the refreshed-CF number)",
+  "warm": {
+   "n": 2000,
+   "ndcg@10": 0.0506,
+   "recall@10": 0.114,
+   "map@10": 0.032,
+   "random_ndcg@10": 0.0416
+  },
+  "cold": {
+   "n": 2000,
+   "ndcg@10": 0.0497,
+   "recall@10": 0.106,
+   "map@10": 0.0329,
+   "random_ndcg@10": 0.0454
+  }
+ }
 }

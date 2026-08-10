@@ -2,6 +2,7 @@
 The cold row justifies the deployed weights keeping rating+skin (cf & semantic are 0
 for users with no history). Deployed weights [sem .3 / cf .5 / rating .1 / skin .1].
 """
+import json
 import sys
 from pathlib import Path
 
@@ -46,7 +47,9 @@ def main():
     print("STANDARD METRICS by cohort — DEPLOYED weights, 100 sampled negatives")
     print("=" * 66)
     print(f"{'cohort':18}{'n':>6}{'NDCG@10':>10}{'Recall@10':>11}{'MAP@10':>9}{'random':>9}")
-    for name, coh, mlk in [("warm (>=5 rev)", warm, 2), ("cold (1-2 rev)", cold, 0)]:
+    out = {"n_neg": 100, "weights": "deployed [sem .3/cf .5/rating .1/skin .1]",
+           "note": "leave-one-out, temporal split, CF stale at test time (see rank_results.test_stale for the refreshed-CF number)"}
+    for name, coh, mlk, key in [("warm (>=5 rev)", warm, 2, "warm"), ("cold (1-2 rev)", cold, 0, "cold")]:
         inst = re2.make_instances(positives(coh), pools, sig, 2000, min_liked=mlk)
         if not inst:
             print(f"{name:18}{'0':>6}   (no instances)")
@@ -55,6 +58,14 @@ def main():
         rnd = np.mean([re2.ndcg_at(re2.rank_of_true(re2.RNG.standard_normal(M.shape[0]), ti))
                        for M, ti, _ in inst])
         print(f"{name:18}{n:>6}{nd:>10.4f}{rc:>11.4f}{ap:>9.4f}{rnd:>9.4f}")
+        out[key] = {"n": int(n), "ndcg@10": round(float(nd), 4), "recall@10": round(float(rc), 4),
+                    "map@10": round(float(ap), 4), "random_ndcg@10": round(float(rnd), 4)}
+
+    path = ROOT / "eval" / "results.json"
+    results = json.load(open(path)) if path.exists() else {}
+    results["standard_cohort"] = out
+    json.dump(results, open(path, "w"), indent=1)
+    print(f"\nmerged standard_cohort into {path}")
 
 
 if __name__ == "__main__":
