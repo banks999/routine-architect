@@ -247,18 +247,22 @@ def solve(candidates_by_slot: dict, profile: Profile,
 def naive_greedy(candidates_by_slot: dict, profile: Profile) -> Routine:
     """Baseline: top-relevance per slot, BOTH treatments defaulted to AM, no scheduling."""
     placements = []
-    tA = _pool(candidates_by_slot, "treatment_A")[0]
+    def top(slot):  # a hard exclusion filter can legitimately empty a pool -> skip the slot
+        p = _pool(candidates_by_slot, slot)
+        return p[0] if p else None
+    tA = top("treatment_A")
     tB_pool = _pool(candidates_by_slot, "treatment_B")
-    tB = next((c for c in tB_pool if c.id != tA.id), tB_pool[0])
+    tB = next((c for c in tB_pool if not tA or c.id != tA.id), tB_pool[0] if tB_pool else None)
     picks = {
-        "cleanser": (candidates_by_slot["cleanser"][0], BOTH),
+        "cleanser": (top("cleanser"), BOTH),
         "treatment_A": (tA, frozenset({"AM"})),
         "treatment_B": (tB, frozenset({"AM"})),
-        "moisturizer": (candidates_by_slot["moisturizer"][0], BOTH),
-        "spf": (candidates_by_slot["spf"][0], frozenset({"AM"})),
+        "moisturizer": (top("moisturizer"), BOTH),
+        "spf": (top("spf"), frozenset({"AM"})),
     }
     for slot, (cand, sess) in picks.items():
-        placements.append(Placement(cand, slot, sess))
+        if cand is not None:
+            placements.append(Placement(cand, slot, sess))
     prods = [pl.cand for pl in placements]
     assign = {pl.cand.id: set(pl.sessions) for pl in placements}
     return Routine(placements, _total_price(placements), objective(placements, profile),

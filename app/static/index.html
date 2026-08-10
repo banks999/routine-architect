@@ -41,11 +41,8 @@
         <div id="concerns" class="grid grid-cols-2 gap-1 mt-1 text-sm"></div></div>
       <div><label class="text-xs font-semibold text-slate-500">Budget: <span id="budgetLabel" class="pink font-bold">₹12,000</span></label>
         <input id="budget" type="range" min="4000" max="30000" step="500" value="12000" class="w-full accent-pink mt-1"></div>
-      <div><label class="text-xs font-semibold text-slate-500">Exclusions</label>
+      <div><label class="text-xs font-semibold text-slate-500">Exclusions <span class="text-slate-400 font-normal">(hard filters)</span></label>
         <div id="exclusions" class="grid grid-cols-2 gap-1 mt-1 text-sm"></div></div>
-      <div><label class="text-xs font-semibold text-slate-500">Experience</label>
-        <select id="experience" class="w-full border rounded-lg p-2 mt-1 text-sm">
-          <option>beginner</option><option selected>intermediate</option><option>advanced</option></select></div>
       <div><label class="text-xs font-semibold text-slate-500">Products you already use
           <span class="text-slate-400 font-normal">(one per line)</span></label>
         <textarea id="owned" rows="2" placeholder="e.g. The Ordinary Granactive Retinoid 2%" class="w-full border rounded-lg p-2 mt-1 text-sm"></textarea></div>
@@ -115,8 +112,7 @@ function gather(){
     concerns:[...document.querySelectorAll(".conc:checked")].map(x=>x.value),
     budget_inr:+budget.value,
     exclusions:[...document.querySelectorAll(".excl:checked")].map(x=>x.value),
-    owned:owned.value.split("\n").map(s=>s.trim()).filter(Boolean),
-    experience:experience.value};
+    owned:owned.value.split("\n").map(s=>s.trim()).filter(Boolean)};
 }
 async function run(keepProfile){
   const body=keepProfile&&lastProfile?lastProfile:gather();
@@ -137,6 +133,13 @@ function budgetText(d){
   const pct=Math.round((a/t-1)*100);
   if(d.within_budget) return `${money(a)} — ${pct}% over your ${money(t)} target (within 15% tolerance)`;
   return `<span class="text-rose-600">${money(a)} — ${pct}% over your ${money(t)} target (exceeds 15% tolerance)</span>`;
+}
+function exclNote(d){
+  const e=d.exclusions; if(!e||(!e.count&&!(e.cautions||[]).length)) return "";
+  const by=Object.entries(e.by_filter||{}).map(([k,n])=>`${n} ${k}`).join(", ");
+  const line=e.count?`<b>${e.count} product${e.count>1?"s":""} excluded by your filters</b>${by?` (${by})`:""}.`:"";
+  const cau=(e.cautions||[]).map(c=>`<div class="text-amber-700 mt-1">⚠️ ${c}</div>`).join("");
+  return `<div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-3 text-sm">🚫 ${line}${cau}</div>`;
 }
 const chip=(t,cls="bg-pink/10 pink")=>`<span class="text-[11px] px-2 py-[2px] rounded-full ${cls}">${t}</span>`;
 const CONF={verified:"bg-emerald-100 text-emerald-700",user_supplied:"bg-emerald-100 text-emerald-700",
@@ -253,7 +256,7 @@ function render(d){
           <div class="text-[11px] mt-1 ${ok?"text-emerald-600":"text-rose-600 font-semibold"}">${ok?"✓ full conflict checking":"✗ conflict checking disabled — "+r.note}</div></div>`;
       }).join("")+`</div></div>`;
   }
-  results.innerHTML = banner + swapBanner + ladder + board("☀️ Morning (AM)",d.am) + board("🌙 Night (PM)",d.pm,true) + panel + cautions + dbg;
+  results.innerHTML = banner + exclNote(d) + swapBanner + ladder + board("☀️ Morning (AM)",d.am) + board("🌙 Night (PM)",d.pm,true) + panel + cautions + dbg;
 }
 paintToggle();
 </script>

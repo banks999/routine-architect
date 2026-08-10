@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 
 from app.core import conflicts as cf
+from app.core import filters as flt
 from app.core import resolve as rz
 from app.core import retrieval as ret
 from app.core import solver as sv
@@ -29,6 +30,13 @@ EMB = dict(zip(_e["ids"], _e["emb"]))
 META = {r.product_id: r for r in _prod.itertuples()}
 # safety-side detection: any-position (a deep-listed active still counts)
 CLASSES = {p: present_classes(i, None) for p, i in zip(_prod["product_id"], _prod["ingredients"]) if isinstance(i, str)}
+# raw INCI per product for the text-level hard-exclusion filters (§ user-filters).
+_RAW_INCI = {p: i for p, i in zip(_prod["product_id"], _prod["ingredients"]) if isinstance(i, str)}
+
+
+def _excluded_by(pid: str, flags) -> str | None:
+    """Which hard exclusion filter removes this catalogue product, or None."""
+    return flt.reason_for(flags, _RAW_INCI.get(pid, ""), CLASSES.get(pid, frozenset()))
 
 CONCERN_QUERY = {
     "aging": "retinol anti-aging serum for wrinkles", "texture": "glycolic acid AHA exfoliating serum",
@@ -84,9 +92,24 @@ def _z(a):
     return (a - a.mean()) / a.std() if a.std() > 1e-9 else np.zeros_like(a)
 
 
-def _cands(query, slot, skin, exclude=frozenset()):
-    ids = [h["product_id"] for h in ret.retrieve(query, "treatment" if slot.startswith("treatment") else slot, top_k=40)
-           if h["product_id"] in EMB and h["product_id"] in _priors.index and h["product_id"] not in exclude]
+def _cands(query, slot, skin, exclude=frozenset(), flags=(), dropped=None):
+    # When filters are active, retrieve deeper so compliant products survive the cut
+    # (an all-retinoid 'anti-aging' pool must still yield non-retinoid picks for a
+    # pregnancy-safe user), then keep the normal top-40 of what's left.
+    top_k = 40 if not flags else 150
+    ids = []
+    for h in ret.retrieve(query, "treatment" if slot.startswith("treatment") else slot, top_k=top_k):
+        i = h["product_id"]
+        if i not in EMB or i not in _priors.index or i in exclude:
+            continue
+        reason = _excluded_by(i, flags) if flags else None
+        if reason:
+            if dropped is not None:
+                dropped.setdefault(reason, set()).add(i)
+            continue
+        ids.append(i)
+        if len(ids) >= 40:
+            break
     qv = ret.get_model().encode([query], normalize_embeddings=True)[0]
     sem = _z([float(qv @ EMB[i]) for i in ids])
     rat = _z([_priors.at[i, "bayes"] for i in ids])
@@ -106,13 +129,14 @@ def _cands(query, slot, skin, exclude=frozenset()):
     return sorted(out, key=lambda c: c.relevance, reverse=True)
 
 
-def build_candidates(profile: sv.Profile, exclude=frozenset()):
+def build_candidates(profile: sv.Profile, exclude=frozenset(), flags=(), dropped=None):
     c1, c2 = profile.concerns[0], profile.concerns[-1]
-    return {"cleanser": _cands(BASE_Q["cleanser"], "cleanser", profile.skin, exclude),
-            "moisturizer": _cands(BASE_Q["moisturizer"], "moisturizer", profile.skin, exclude),
-            "spf": _cands(BASE_Q["spf"], "spf", profile.skin, exclude),
-            "treatment_A": _cands(CONCERN_QUERY.get(c1, c1), "treatment_A", profile.skin, exclude),
-            "treatment_B": _cands(CONCERN_QUERY.get(c2, c2), "treatment_B", profile.skin, exclude)}
+    f = tuple(flags)
+    return {"cleanser": _cands(BASE_Q["cleanser"], "cleanser", profile.skin, exclude, f, dropped),
+            "moisturizer": _cands(BASE_Q["moisturizer"], "moisturizer", profile.skin, exclude, f, dropped),
+            "spf": _cands(BASE_Q["spf"], "spf", profile.skin, exclude, f, dropped),
+            "treatment_A": _cands(CONCERN_QUERY.get(c1, c1), "treatment_A", profile.skin, exclude, f, dropped),
+            "treatment_B": _cands(CONCERN_QUERY.get(c2, c2), "treatment_B", profile.skin, exclude, f, dropped)}
 
 
 _PHRASE_FIX = {"long way": "a little goes a long way", "little goes": "a little goes a long way",
@@ -263,10 +287,12 @@ def _card(pl, why, grounding, owned_meta=None):
 
 
 async def recommend(profile: sv.Profile, enforce_conflicts: bool = True, owned: list | None = None,
-                    exclude: list | None = None) -> dict:
+                    exclude: list | None = None, exclusions: list | None = None) -> dict:
     t = {}
+    flags = tuple(exclusions or [])
+    dropped: dict = {}
     pinned, owned_meta, resolutions = _resolve_owned(owned or [])
-    t0 = time.perf_counter(); cands = build_candidates(profile, frozenset(exclude or [])); t["retrieval_and_rank_ms"] = (time.perf_counter()-t0)*1000
+    t0 = time.perf_counter(); cands = build_candidates(profile, frozenset(exclude or []), flags, dropped); t["retrieval_and_rank_ms"] = (time.perf_counter()-t0)*1000
     t0 = time.perf_counter(); routine = sv.solve(cands, profile, enforce_conflicts=enforce_conflicts, pinned=pinned); t["solve_ms"] = (time.perf_counter()-t0)*1000
     t0 = time.perf_counter(); whys, ground, src = await _explain(routine.placements, profile); t["explain_ms"] = (time.perf_counter()-t0)*1000
 
@@ -288,6 +314,10 @@ async def recommend(profile: sv.Profile, enforce_conflicts: bool = True, owned: 
         "cautions": [_viol(v) for v in routine.cautions],
         "score_decomposition": decomp, "explanation_source": src, "latency_ms": {k: round(v, 1) for k, v in t.items()},
         "backend": store.backend,
+        "exclusions": {"applied": list(flags),
+                       "count": len({i for s in dropped.values() for i in s}),
+                       "by_filter": {r: len(s) for r, s in dropped.items()},
+                       "cautions": flt.filter_cautions(flags)},
         "resolutions": [{"query": r.query, "name": r.name, "tier": r.tier, "method": r.method,
                          "confidence": r.confidence, "conflict_checkable": r.conflict_checkable,
                          "classes": sorted(r.classes), "note": r.note} for r in resolutions],
