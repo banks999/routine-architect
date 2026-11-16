@@ -1,3 +1,14 @@
+---
+title: Skincare Routine Architect
+emoji: 🧴
+colorFrom: pink
+colorTo: indigo
+sdk: docker
+app_port: 8000
+pinned: false
+short_description: Safe, budget-aware skincare routines that schedule ingredient conflicts AM/PM
+---
+
 # Skincare Routine Architect
 
 **Recommender systems rank items independently. But nobody buys one skincare product — they
@@ -13,7 +24,7 @@ of excluding products.
 | **Budget adherence** (threshold-independent) | **0%** — spends ~2.4× budget | **100%** |
 | Placement compliance — retinoid PM, etc. (any-position) | 61.5% | 100% |
 | Routines with ≥1 hard ingredient conflict (any-position) | 21% | **0% (by construction)** |
-| Latency (end-to-end, warm) | — | ~40 ms |
+| Latency (end-to-end, warm, no LLM) | — | ~130 ms p50 / 156 ms p95 |
 
 *(200 synthetic profiles. The budget result needs no ingredient-detection threshold and is the
 hardest number. Real co-reviewed product sets show the conflict effect directly: conflict rate rises
@@ -26,8 +37,9 @@ docker compose up --build      # then open http://localhost:8000
 ```
 
 Mongo + Redis + the API come up together; the API loads Mongo from committed data and serves the UI.
-FAISS/BM25/embedding indexes are **prebuilt and committed** (`data/processed/`) — no build step, no
-Kaggle account needed. A Gemini key is optional (`GEMINI_API_KEY` in `.env`); without it, explanations
+FAISS/BM25/embedding indexes and the full processed catalogue are **prebuilt and committed**
+(`data/processed/`) — no build step, no Kaggle account needed. Mongo and Redis are optional: a
+single container with neither (how the hosted demo runs) falls back to the committed parquet files. A Gemini key is optional (`GEMINI_API_KEY` in `.env`); without it, explanations
 use a rule-based template grounded in matched-skin review snippets.
 
 **Try:** click the four preset buttons. "Oily & acne-prone" forces an AM/PM split (BHA morning,
@@ -61,6 +73,6 @@ uvicorn app.main:app --reload      # runs with a parquet fallback if Mongo/Redis
 
 `scripts/00_verify_dataset.py` → `01_load_mongo.py` → `02_parse_ingredients.py` → `03_build_indexes.py`
 → `04_build_rank_priors.py`. Raw Kaggle *Sephora Products and Skincare Reviews* goes in `data/raw/`
-(gitignored); a 200-product-equivalent processed set + sample reviews are committed so it runs offline.
+(gitignored); the processed catalogue (8,494 products) + a 60k-review sample are committed so it runs offline.
 
 > ⚠️ **Not medical advice.** Conflict rules are Western-dermatology heuristics, not clinically validated.

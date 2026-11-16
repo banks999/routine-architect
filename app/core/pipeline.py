@@ -241,9 +241,12 @@ async def _gemini_explain(context: list) -> dict | None:
                   "the user's skin type actually said. Do NOT invent ingredients or make safety/medical claims. "
                   "Return ONLY JSON {product_id: sentence}.\n" + json.dumps(context)[:7000])
         r = genai.GenerativeModel("gemini-flash-lite-latest").generate_content(
-            prompt, request_options={"timeout": 7})
+            prompt, request_options={"timeout": 7},
+            generation_config={"response_mime_type": "application/json"})
         txt = r.text.strip().removeprefix("```json").removeprefix("```").removesuffix("```").strip()
-        return json.loads(txt)
+        # strict=False: the model sometimes emits a raw newline/tab inside a string value, which strict
+        # JSON rejects — that used to discard a whole (otherwise fine) response and fall back to template.
+        return json.loads(txt, strict=False)
     try:
         out = await asyncio.wait_for(asyncio.to_thread(_call), timeout=8)
         return out if isinstance(out, dict) else None
@@ -252,7 +255,7 @@ async def _gemini_explain(context: list) -> dict | None:
         return None
 
 
-async def _explain(placements, profile):
+async def _explain(placements, profile, use_llm: bool = True):
     context, tmpl, ground = [], {}, {}
     for pl in placements:
         _, snip = await store.review_snippets(pl.cand.id, profile.skin, k=3)
@@ -263,7 +266,7 @@ async def _explain(placements, profile):
                         "actives": sorted(pl.cand.classes & sv._active_classes()),
                         "themes": themes, "matched_skin_reviews": n_skin,
                         "snippets": [s["text"][:200] for s in snip]})
-    gem = await _gemini_explain(context)
+    gem = await _gemini_explain(context) if use_llm else None
     source = "gemini" if gem else "template"
     whys = {pid: (gem.get(pid) if gem and gem.get(pid) else tmpl[pid]) for pid in tmpl}
     return whys, ground, source
@@ -287,14 +290,14 @@ def _card(pl, why, grounding, owned_meta=None):
 
 
 async def recommend(profile: sv.Profile, enforce_conflicts: bool = True, owned: list | None = None,
-                    exclude: list | None = None, exclusions: list | None = None) -> dict:
+                    exclude: list | None = None, exclusions: list | None = None, use_llm: bool = True) -> dict:
     t = {}
     flags = tuple(exclusions or [])
     dropped: dict = {}
     pinned, owned_meta, resolutions = _resolve_owned(owned or [])
     t0 = time.perf_counter(); cands = build_candidates(profile, frozenset(exclude or []), flags, dropped); t["retrieval_and_rank_ms"] = (time.perf_counter()-t0)*1000
     t0 = time.perf_counter(); routine = sv.solve(cands, profile, enforce_conflicts=enforce_conflicts, pinned=pinned); t["solve_ms"] = (time.perf_counter()-t0)*1000
-    t0 = time.perf_counter(); whys, ground, src = await _explain(routine.placements, profile); t["explain_ms"] = (time.perf_counter()-t0)*1000
+    t0 = time.perf_counter(); whys, ground, src = await _explain(routine.placements, profile, use_llm); t["explain_ms"] = (time.perf_counter()-t0)*1000
 
     pls = routine.placements
     decomp = {"relevance_sum": round(sum(p.cand.relevance for p in pls), 3),

@@ -140,5 +140,26 @@
    "map@10": 0.0329,
    "random_ndcg@10": 0.0454
   }
+ },
+ "latency_e2e": {
+  "n": 24,
+  "store": "parquet-fallback",
+  "llm": false,
+  "retrieval_and_rank_ms": {
+   "p50": 89.5,
+   "p95": 113.7
+  },
+  "solve_ms": {
+   "p50": 11.8,
+   "p95": 17.3
+  },
+  "explain_ms": {
+   "p50": 27.1,
+   "p95": 29.9
+  },
+  "total_ms": {
+   "p50": 131.0,
+   "p95": 155.8
+  }
  }
 }

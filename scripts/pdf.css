@@ -1,0 +1,18 @@
+@page { size: A4; margin: 18mm 16mm 18mm 16mm; }
+html { font-size: 10.5pt; }
+body { font-family: "Georgia", "Liberation Serif", "DejaVu Serif", serif; line-height: 1.5; color: #1c1917; max-width: none; }
+h1 { font-size: 24pt; margin: 0 0 2pt; letter-spacing: -0.5px; }
+h1 + h3 { margin-top: 0; font-weight: 400; color: #78716c; font-style: italic; font-size: 13pt; }
+h2 { font-size: 15pt; margin: 22pt 0 6pt; padding-top: 6pt; border-top: 1.5px solid #e7e5e4; break-after: avoid; }
+h3 { font-size: 12pt; margin: 14pt 0 4pt; break-after: avoid; }
+p, li { orphans: 3; widows: 3; }
+hr { border: 0; border-top: 1px solid #e7e5e4; margin: 12pt 0; }
+img { max-width: 100%; display: block; margin: 8pt auto 4pt; break-inside: avoid; border: 1px solid #e7e5e4; }
+table { border-collapse: collapse; width: 100%; margin: 8pt 0 10pt; font-size: 9.5pt; break-inside: avoid; font-family: "Helvetica", "Liberation Sans", "DejaVu Sans", sans-serif; }
+th, td { border: 1px solid #d6d3d1; padding: 3pt 6pt; vertical-align: top; }
+th { background: #f5f5f4; text-align: left; }
+code { font-family: "DejaVu Sans Mono", "Liberation Mono", monospace; font-size: 85%; background: #f5f5f4; padding: 0 2px; border-radius: 2px; }
+pre { background: #f5f5f4; padding: 6pt 8pt; border-radius: 4px; break-inside: avoid; }
+pre code { background: none; }
+em { color: #44403c; }
+a { color: #be185d; text-decoration: none; }

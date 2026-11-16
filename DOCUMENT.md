@@ -18,7 +18,7 @@ Three numbers say why this matters, and each is traceable to the evaluation in �
 
 - A conventional recommender, personalising to a user's two concerns, spends a **median 2.36× the budget it was given** — zero budget compliance across 200 test profiles. The solver stays inside budget 100% of the time. This number needs no assumption about how we detect ingredients; it is just arithmetic on price.
 - The same conventional recommender ships a **hard ingredient conflict in 21%** of those routines. The solver ships zero, by construction — it schedules the conflicting products into different sessions instead of removing them.
-- It does this in **roughly 50 milliseconds** per request.
+- It does this in **about 130 milliseconds** per request (p50; 156 ms at p95), measured end to end on the shipped API with the language model off.
 
 There is a quieter finding underneath, and it is the one I would repeat in a meeting. A generic bestseller list is chemically safe — but only because it recommends nothing in particular. The conflicts appear the moment the system starts personalising, which is the moment it starts doing its job. A better recommender makes this *worse*, not better, until something reasons about the basket. That is the gap this fills.
 
@@ -204,7 +204,7 @@ One honest reversal is buried in that table, and it's worth surfacing. I expecte
 
 **Beyond-accuracy.** Per slot, the solver's recommendations cover 6.7–14.8% of the eligible catalogue, with intra-list diversity 0.15–0.38, novelty 3.8–7.0 bits, and a Gini popularity-bias coefficient from 0.24 (sunscreen, least biased) to 0.63 (moisturiser, most).
 
-**Latency.** Retrieval runs at a p50 of 25 ms per slot, ranking and building all five slots at 4 ms, the basket solve at 22 ms — roughly **50 ms end to end**, well inside interactive budget. The one expensive stage is the optional LLM explanation, which adds about 1.3 seconds when enabled; that is precisely why the default fast path uses the template and the LLM is opt-in.
+**Latency.** Measured on the real request path (`eval/e2e_latency.py`: 24 varied profiles, warm, 4 vCPU, LLM off), a request takes **131 ms at p50 and 156 ms at p95**. That splits into about 90 ms for retrieval and ranking across all five slots, 12 ms for the basket solve and 27 ms to assemble the template explanations. The solver is not the cost; embedding five queries and searching five indexes is. The one expensive stage is the optional LLM explanation, which adds roughly 1.5 seconds when enabled; that is why the default path uses the template and the LLM is opt-in. A correction worth recording: an earlier draft of this document said "about 50 ms". That figure summed one retrieval slot (25 ms), the ranking build (4 ms) and the solve (22 ms), but a real request retrieves for five slots. I re-measured the whole path rather than keep the flattering number.
 
 **Explanation faithfulness.** When the LLM writes the "why this for you" sentence, does every claim trace back to the grounding it was given, or does it embellish? I sampled 27 distinct products and judged each explanation with a *different* model family — Groq's `llama-3.3-70b-versatile` grading the Gemini generator, to avoid the self-preference bias of a model marking its own work.
 
@@ -363,13 +363,15 @@ The whole thing comes up from a clean clone with one command:
 docker compose up
 ```
 
-That starts MongoDB (the product and review document store), Redis (the request cache), and the FastAPI app, and serves the interface at `localhost:8000`. A 200-product sample dataset is committed, so it runs without a Kaggle account; the full dataset is rebuilt with the numbered scripts in `scripts/`. The embedding model is baked into the image and the app is hardened to run fully offline (`HF_HUB_OFFLINE`), so first request is instant and no network call is made at runtime.
+That starts MongoDB (the product and review document store), Redis (the request cache), and the FastAPI app, and serves the interface at `localhost:8000`. The processed catalogue (all 8,494 products, with their prebuilt FAISS, BM25 and embedding indexes) and a 60,000-review sample are committed, so it runs without a Kaggle account; the raw Kaggle data is only needed to rebuild them with the numbered scripts in `scripts/`. MongoDB and Redis are optional: with neither present (a single-container host) the app serves from the committed parquet files and an in-memory cache, and `/health` and the interface badge say so. The embedding model is baked into the image and the app is hardened to run fully offline (`HF_HUB_OFFLINE`), so first request is instant and no network call is made at runtime.
 
 Two build decisions are worth recording. The Dockerfile pins **CPU-only PyTorch**, which avoids pulling the entire NVIDIA CUDA stack (cuBLAS, cuDNN, NCCL, cuSPARSELt, Triton) for a small CPU embedding model — the shipped image is **2.87 GB on disk / 671 MB compressed**. And every dependency is version-pinned, including the whole google/grpc chain, because leaving it unpinned made the resolver backtrack through fifteen `grpcio-status` versions on a clean build.
 
 If the LLM key is missing or its free-tier quota is exhausted — which is likely to happen exactly while someone is evaluating this — the system degrades to template explanations and rule-based parsing, and says which mode it's in via the `expl:` badge in the interface. Nothing safety-relevant depends on the LLM being available.
 
 Endpoints: `POST /recommend/routine`, `GET /product/{id}`, `GET /health`, `GET /metrics`.
+
+**The public demo.** It is also deployed as a single container on Hugging Face Spaces (link in the README). Requests are validated strictly (an unrecognised skin type, concern or exclusion is rejected rather than ignored), rate-limited per client, and LLM explanations, when a key is configured, have a per-client and a global hourly budget after which the template takes over — so quota exhaustion degrades the prose, never the safety logic.
 
 **Where each §7 number comes from.** Every results table traces to a committed evaluation artifact, regenerable with the scripts in `eval/`:
 

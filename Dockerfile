@@ -22,6 +22,9 @@ COPY eval ./eval
 COPY data/processed ./data/processed
 COPY data/sample ./data/sample
 
+# Hugging Face Spaces runs containers as uid 1000 (app_port is set to 8000 in README.md frontmatter).
+RUN useradd -m -u 1000 appuser && chown -R appuser /app
+USER appuser
+ENV PORT=8000
 EXPOSE 8000
-# load Mongo from the committed parquet/sample, then serve
-CMD ["sh", "-c", "python scripts/01_load_mongo.py && uvicorn app.main:app --host 0.0.0.0 --port 8000"]
+CMD ["sh", "scripts/start.sh"]
